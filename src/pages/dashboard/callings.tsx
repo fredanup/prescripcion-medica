@@ -112,6 +112,13 @@ export default function Callings() {
     return <Spinner text="Loading" />;
   }
 
+  const handleClick = (id: string) => {
+    router.push({
+      pathname: '/dashboard/callings/[id]',
+      query: { id: id },
+    });
+  };
+
   return (
     <>
       <svg
@@ -132,9 +139,8 @@ export default function Callings() {
          * Botón para agregar nueva convocatoria
          * absolute bottom-0 right-0 h-16 w-16
          */}
-
+        <FormTitle text="Convocatorias" />
         <div className="flex flex-row justify-between mb-4">
-          <FormTitle text="Convocatorias" />
           <div
             className={
               rol !== 'applicant'
@@ -156,8 +162,9 @@ export default function Callings() {
         <>
           {callings?.map((calling, index) => (
             <div
-              className="cursor-pointer flex flex-col gap-2 p-6 rounded-lg drop-shadow-md bg-white mb-4"
+              className="flex flex-col gap-2 p-6 rounded-lg drop-shadow-md bg-white mb-4"
               key={index}
+              onClick={() => handleClick(calling.id)}
             >
               <div className="flex flex-row justify-between items-center">
                 <h3 className="text-black text-base font-medium">
@@ -204,9 +211,6 @@ export default function Callings() {
                         ? ` bg-red-500 rounded-lg py-0 px-2 text-white font-semibold `
                         : 'hidden'
                     }
-                    onClick={(event) => {
-                      event.stopPropagation();
-                    }}
                   >
                     200
                   </label>
@@ -266,7 +270,10 @@ export default function Callings() {
                               ? 'fill-blue-600'
                               : 'fill-gray-500'
                           }`}
-                          onClick={() => handleToggle(index)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleToggle(index);
+                          }}
                           aria-label={
                             expandedStates[index] ? 'Collapse' : 'Expand'
                           }
