@@ -26,10 +26,11 @@ const CreateDocumentModal = ({
 
   //Mutación para subir archivos
   const { mutateAsync: fetchPresignedUrls } =
-    trpc.document.createS3UserDocument.useMutation();
+    trpc.document.createS3UserDocument.useMutation(); //Obtengo la ruta donde voy a almacenar, es una promesa
 
   //Mutación para la base de datos
-  const createUserDocument = trpc.document.createDbUserDocument.useMutation();
+  const createUserDocument =
+    trpc.document.createOrUpdateDbUserDocument.useMutation();
 
   //Estilizado del fondo detrás del modal. Evita al usuario salirse del modal antes de elegir alguna opción
   const overlayClassName = isOpen
@@ -58,10 +59,10 @@ const CreateDocumentModal = ({
       multiple: false,
       onDropAccepted: () => {
         fetchPresignedUrls({
-          key: academicDocument,
+          key: academicDocument, //A la ruta que obtuve le doy su clave
         })
           .then((url) => {
-            setPresignedUrl(url);
+            setPresignedUrl(url); //Guardo la ruta completa
             setSubmitDisabled(false);
           })
           .catch((err) => console.error(err));
@@ -94,11 +95,23 @@ const CreateDocumentModal = ({
         })
         .catch((err) => console.error(err));
 
+      // Update the document info in the database and invalidate the cache
+      await createUserDocument.mutateAsync({
+        document: academicDocument,
+        key: academicDocument,
+      });
+
       await apiUtils.document.getUserDocuments.invalidate();
 
       setSubmitDisabled(true);
     }
-  }, [acceptedFiles, apiUtils.document.getUserDocuments, presignedUrl]);
+  }, [
+    academicDocument,
+    acceptedFiles,
+    apiUtils.document.getUserDocuments,
+    createUserDocument,
+    presignedUrl,
+  ]);
 
   return (
     <>

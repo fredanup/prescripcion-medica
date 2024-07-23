@@ -21,7 +21,70 @@ export const documentRouter = createTRPCRouter({
       });
       return await getSignedUrl(s3, putObjectCommand);
     }),
+    createOrUpdateDbUserDocument: protectedProcedure
+    .input(documentSchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        if (!ctx.session?.user?.id) {
+          throw new Error('Not authenticated');
+        }
+        const userId = ctx.session.user.id;
+        
+        // Check if the document already exists
+        const existingDocument = await ctx.prisma.document.findUnique({
+          where: {
+            userId_key: {
+              userId: userId,
+              key: input.key,
+            },
+          },
+        });
 
+        if (existingDocument) {
+          // Update the existing document
+          await ctx.prisma.document.update({
+            where: {
+              userId_key: {
+                userId: userId,
+                key: input.key,
+              },
+            },
+            data: {
+              document: input.document,
+            },
+          });
+        } else {
+          // Create a new document
+          await ctx.prisma.document.create({
+            data: {
+              document: input.document,
+              key: input.key,
+              userId: userId,
+            },
+          });
+        }
+
+        // Count the user's documents
+        const documentosCount = await ctx.prisma.document.count({
+          where: {
+            userId: userId,
+          },
+        });
+
+        // Update the user's 'elegible' field
+        await ctx.prisma.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            elegible: documentosCount === 7,
+          },
+        });
+
+      } catch (error) {
+        console.log(error);
+      }
+    }),
   //Creación de documento en Prisma
   createDbUserDocument: protectedProcedure
     .input(documentSchema)
@@ -37,6 +100,22 @@ export const documentRouter = createTRPCRouter({
             userId: ctx.session.user.id,
           },
         });
+         // Contar los documentos del usuario
+      const documentosCount = await ctx.prisma.document.count({
+        where: {
+          userId:ctx.session.user.id,
+        },
+      });
+       // Actualizar el campo 'apto' del usuario
+      await ctx.prisma.user.update({
+        where: {
+          id: ctx.session.user.id,
+        },
+        data: {
+          elegible: documentosCount === 7,
+        },
+      });
+
       } catch (error) {
         console.log(error);
       }

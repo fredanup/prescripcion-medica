@@ -43,6 +43,8 @@ model Document {
   createdAt DateTime @default(now())
   User      User?    @relation(fields: [userId], references: [id])
   userId    String?
+
+  @@unique([userId, key]) // Define la combinación única de userId y key
 }
 
 model Calling {

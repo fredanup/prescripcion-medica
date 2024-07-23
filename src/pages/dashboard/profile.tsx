@@ -2,10 +2,12 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import CreateDocumentModal from 'pages/modals/create-document-modal';
+import UnvalidDocument from 'pages/modals/unvalid-document';
 
 import { useEffect, useState } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
+import Spinner from 'utilities/spinner';
 import { trpc } from 'utils/trpc';
 
 export default function Profile() {
@@ -13,7 +15,9 @@ export default function Profile() {
    * Declaraciones de hooks de estado
    */
   //Hook de estado que controla la apertura del modal de creación de documentos
+
   const [isOpen, setIsOpen] = useState(false);
+  const [isUnavailableDoc, setIsUnavailableDoc] = useState(false);
   const [userId, setUserId] = useState('');
   //Obtener el usuario actual
   const { data: session, status } = useSession();
@@ -22,12 +26,14 @@ export default function Profile() {
 
   //Redireccion al usuario a Main
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      // Aquí puedes mostrar un spinner o cualquier indicador de carga mientras se verifica el estado de autenticación
-      return;
-    }
     if (session) {
-      setUserId(session.user!.id);
+      if (status === 'authenticated') {
+        setUserId(session.user!.id);
+      } else {
+        <Spinner text={status} />;
+      }
+    } else {
+      <Spinner text={status} />;
     }
   }, [status, session]);
 
@@ -35,10 +41,13 @@ export default function Profile() {
    * Consultas a base de datos
    */
   //Obtener los registros de bd
-  const { data } = trpc.document.getUserDocuments.useQuery({
-    userId: userId,
-  });
-  const { data: currentUser } = trpc.user.findOne.useQuery(userId);
+  const { data } = trpc.document.getUserDocuments.useQuery(
+    { userId }, // Pasa userId directamente como parte del objeto de entrada
+    {
+      enabled: !!userId, // La consulta se habilita solo si userId tiene un valor truthy
+    },
+  );
+  const { data: currentUser } = trpc.user.findCurrentOne.useQuery();
 
   /**
    * Funciones de apertura y cierre de modales
@@ -52,6 +61,14 @@ export default function Profile() {
   const closeModal = () => {
     setIsOpen(false);
     setDoctype('');
+  };
+
+  const openUnavailableDocModal = () => {
+    setIsUnavailableDoc(true);
+  };
+  //Función de cierre del modal DocumentModal
+  const closeUnavailableDocModalModal = () => {
+    setIsUnavailableDoc(false);
   };
 
   const urlDoc = (doc: string, userId: string) => {
@@ -130,14 +147,19 @@ export default function Profile() {
                   </td>
 
                   <td className="py-4">
-                    <Link href={urlDoc('DNI', userId) ?? ''}>
+                    <Link
+                      href={urlDoc('DNI', userId) || ''}
+                      onClick={() => {
+                        if (!urlDoc('DNI', userId)) openUnavailableDocModal();
+                      }}
+                    >
                       <svg
                         viewBox="0 0 512 512"
                         className={`h-8 w-8 cursor-pointer  p-1.5 ${
-                          urlDoc('DNI', userId) !== null
+                          urlDoc('DNI', userId)
                             ? 'fill-pink-500'
                             : 'fill-gray-500'
-                        }  `}
+                        }`}
                       >
                         <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
                       </svg>
@@ -157,7 +179,13 @@ export default function Profile() {
                     </svg>
                   </td>
                   <td className="py-4">
-                    <Link href={urlDoc('Carné SUCAMEC', userId) ?? ''}>
+                    <Link
+                      href={urlDoc('Carné SUCAMEC', userId) ?? ''}
+                      onClick={() => {
+                        if (!urlDoc('Carné SUCAMEC', userId))
+                          openUnavailableDocModal();
+                      }}
+                    >
                       <svg
                         viewBox="0 0 512 512"
                         className={`h-8 w-8 cursor-pointer  p-1.5 ${
@@ -187,6 +215,10 @@ export default function Profile() {
                   <td className="py-4">
                     <Link
                       href={urlDoc('Licencia para portar armas', userId) ?? ''}
+                      onClick={() => {
+                        if (!urlDoc('Licencia para portar armas', userId))
+                          openUnavailableDocModal();
+                      }}
                     >
                       <svg
                         viewBox="0 0 512 512"
@@ -226,6 +258,15 @@ export default function Profile() {
                           userId,
                         ) ?? ''
                       }
+                      onClick={() => {
+                        if (
+                          !urlDoc(
+                            'Antecedentes o Certificado único laboral',
+                            userId,
+                          )
+                        )
+                          openUnavailableDocModal();
+                      }}
                     >
                       <svg
                         viewBox="0 0 512 512"
@@ -265,6 +306,10 @@ export default function Profile() {
                       href={
                         urlDoc('Certificado físico y psicológico', userId) ?? ''
                       }
+                      onClick={() => {
+                        if (!urlDoc('Certificado físico y psicológico', userId))
+                          openUnavailableDocModal();
+                      }}
                     >
                       <svg
                         viewBox="0 0 512 512"
@@ -295,6 +340,10 @@ export default function Profile() {
                   <td className="py-4">
                     <Link
                       href={urlDoc('Certificado de estudios', userId) ?? ''}
+                      onClick={() => {
+                        if (!urlDoc('Certificado de estudios', userId))
+                          openUnavailableDocModal();
+                      }}
                     >
                       <svg
                         viewBox="0 0 512 512"
@@ -322,7 +371,13 @@ export default function Profile() {
                     </svg>
                   </td>
                   <td className="py-4">
-                    <Link href={urlDoc('Certificado laboral', userId) ?? ''}>
+                    <Link
+                      href={urlDoc('Certificado laboral', userId) ?? ''}
+                      onClick={() => {
+                        if (!urlDoc('Certificado laboral', userId))
+                          openUnavailableDocModal();
+                      }}
+                    >
                       <svg
                         viewBox="0 0 512 512"
                         className={`h-8 w-8 cursor-pointer  p-1.5 ${
@@ -344,6 +399,10 @@ export default function Profile() {
           isOpen={isOpen}
           onClose={closeModal}
           opt={docType}
+        />
+        <UnvalidDocument
+          isOpen={isUnavailableDoc}
+          onClose={closeUnavailableDocModalModal}
         />
       </Layout>
     </>
