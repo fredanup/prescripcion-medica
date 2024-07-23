@@ -2,6 +2,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import CreateCallingModal from 'pages/modals/create-calling-modal';
 import DeleteCallingModal from 'pages/modals/delete-calling-modal';
+import UpdateDocumentModal from 'pages/modals/update-document-modal';
 
 import { useEffect, useState } from 'react';
 import FormTitle from 'utilities/form-title';
@@ -27,6 +28,7 @@ export default function Callings() {
   );
 
   const [editIsOpen, setEditIsOpen] = useState(false);
+  const [adviceIsOpen, setAdviceIsOpen] = useState(false);
   const [deleteIsOpen, setDeleteIsOpen] = useState(false);
 
   const [rol, setRole] = useState<string | undefined>(undefined);
@@ -73,6 +75,14 @@ export default function Callings() {
     }
   }, [availableCallings, rol, userCallings]);
 
+  const openAdviceModal = () => {
+    setAdviceIsOpen(true);
+  };
+
+  const closeAdviceModal = () => {
+    setAdviceIsOpen(false);
+  };
+
   //Función de selección de registro y apertura de modal de edición
   const openEditModal = (calling: IEditCalling | null) => {
     setSelectedCalling(calling);
@@ -113,10 +123,21 @@ export default function Callings() {
   }
 
   const handleClick = (id: string) => {
-    router.push({
-      pathname: '/dashboard/callings/[id]',
-      query: { id: id },
-    });
+    if (currentUser?.role === 'employer') {
+      router.push({
+        pathname: '/dashboard/callings/[id]',
+        query: { id: id },
+      });
+    }
+  };
+
+  const handleApplyClick = () => {
+    if (currentUser?.role === 'employer') {
+    } else {
+      if (currentUser?.elegible === true) {
+      }
+      openAdviceModal();
+    }
   };
 
   return (
@@ -178,6 +199,7 @@ export default function Callings() {
                   }
                   onClick={(event) => {
                     event.stopPropagation();
+                    handleApplyClick();
                   }}
                 >
                   <svg
@@ -326,6 +348,12 @@ export default function Callings() {
           ))}
         </>
 
+        {adviceIsOpen && (
+          <UpdateDocumentModal
+            isOpen={adviceIsOpen}
+            onClose={closeAdviceModal}
+          />
+        )}
         {editIsOpen && (
           <CreateCallingModal
             isOpen={editIsOpen}
