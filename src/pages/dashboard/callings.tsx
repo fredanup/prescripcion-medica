@@ -135,8 +135,9 @@ export default function Callings() {
     if (currentUser?.role === 'employer') {
     } else {
       if (currentUser?.elegible === true) {
+      } else {
+        openAdviceModal();
       }
-      openAdviceModal();
     }
   };
 

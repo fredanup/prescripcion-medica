@@ -38,7 +38,7 @@ model Branch {
 
 model Document {
   id        String   @id @default(cuid())
-  document  String   @unique
+  document  String
   key       String?
   createdAt DateTime @default(now())
   User      User?    @relation(fields: [userId], references: [id])

@@ -148,7 +148,7 @@ export default function Profile() {
 
                   <td className="py-4">
                     <Link
-                      href={urlDoc('DNI', userId) || ''}
+                      href={urlDoc('DNI', userId) ?? ''}
                       onClick={() => {
                         if (!urlDoc('DNI', userId)) openUnavailableDocModal();
                       }}
