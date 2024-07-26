@@ -2,6 +2,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import CreateCallingModal from 'pages/modals/create-calling-modal';
 import DeleteCallingModal from 'pages/modals/delete-calling-modal';
+import SuccessfulApply from 'pages/modals/successful-apply';
 import UpdateDocumentModal from 'pages/modals/update-document-modal';
 
 import { useEffect, useState } from 'react';
@@ -30,6 +31,7 @@ export default function Callings() {
 
   const [editIsOpen, setEditIsOpen] = useState(false);
   const [adviceIsOpen, setAdviceIsOpen] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [deleteIsOpen, setDeleteIsOpen] = useState(false);
   const [clickedButtons, setClickedButtons] = useState<Record<string, boolean>>(
     {},
@@ -163,6 +165,13 @@ export default function Callings() {
       });
     }
   };
+  const openIsSuccessModal = () => {
+    setIsSuccess(true);
+  };
+
+  const closeIsSuccessModal = () => {
+    setIsSuccess(false);
+  };
 
   const handleApplyClick = (postulantId: string, callingId: string) => {
     if (currentUser?.role !== 'employer') {
@@ -182,6 +191,7 @@ export default function Callings() {
               }));
             },
           });
+          openIsSuccessModal();
         } else {
           console.error('Postulant ID or Calling ID is missing');
         }
@@ -254,7 +264,9 @@ export default function Callings() {
                   }
                   onClick={(event) => {
                     event.stopPropagation();
-                    handleApplyClick(currentUser!.id, calling.id);
+                    clickedButtons[calling.id]
+                      ? null
+                      : handleApplyClick(currentUser!.id, calling.id);
                   }}
                 >
                   <svg
@@ -269,11 +281,11 @@ export default function Callings() {
                   <label
                     className={
                       rol === 'applicant'
-                        ? `text-white text-sm font-medium cursor-pointer`
+                        ? `text-white text-sm font-medium cursor-pointer `
                         : 'hidden'
                     }
                   >
-                    Postular
+                    {clickedButtons[calling.id] ? 'Enviado' : 'Postular'}
                   </label>
 
                   {/**Contador */}
@@ -417,6 +429,9 @@ export default function Callings() {
             onClose={closeDeleteModal}
             selectedCalling={selectedCalling}
           />
+        )}
+        {isSuccess && (
+          <SuccessfulApply isOpen={isSuccess} onClose={closeIsSuccessModal} />
         )}
       </Layout>
     </>
