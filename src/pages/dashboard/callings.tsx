@@ -8,12 +8,13 @@ import { useEffect, useState } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
 import Spinner from 'utilities/spinner';
-import type { IEditCalling } from 'utils/auth';
+import type { IEditApplication, IEditCalling } from 'utils/auth';
 import { trpc } from 'utils/trpc';
 
 export default function Callings() {
   // Obtener la sesión de la BD
   const { status } = useSession();
+
   //Obtenemos la sesión de la bd
   /**
    * Consultas a base de datos
@@ -30,7 +31,9 @@ export default function Callings() {
   const [editIsOpen, setEditIsOpen] = useState(false);
   const [adviceIsOpen, setAdviceIsOpen] = useState(false);
   const [deleteIsOpen, setDeleteIsOpen] = useState(false);
-
+  const [clickedButtons, setClickedButtons] = useState<Record<string, boolean>>(
+    {},
+  );
   const [rol, setRole] = useState<string | undefined>(undefined);
   //Hook de estado que controla la expansión de llave angular
   const [expandedStates, setExpandedStates] = useState<boolean[]>([]);
@@ -40,7 +43,9 @@ export default function Callings() {
     null,
   );
   */
+  const utils = trpc.useContext();
   const [callings, setCallings] = useState<IEditCalling[] | undefined>();
+
   //Hook de estado que almacena el registro seleccionado
   const [selectedCalling, setSelectedCalling] = useState<IEditCalling | null>(
     null,
@@ -67,13 +72,41 @@ export default function Callings() {
   const { data: availableCallings } =
     trpc.calling.findAvailableCallings.useQuery();
 
+  const myApplications = trpc.application.findMyApplications.useQuery(
+    undefined,
+    {
+      enabled: status === 'authenticated',
+    },
+  );
+  const newApplication = trpc.application.createApplication.useMutation({
+    onSettled: async () => {
+      await utils.application.findCallApplications.invalidate();
+    },
+  });
+
+  const [applications, setApplications] = useState<
+    IEditApplication[] | undefined
+  >();
   useEffect(() => {
     if (rol === 'applicant') {
       setCallings(availableCallings);
+      setApplications(myApplications.data);
     } else {
       setCallings(userCallings);
     }
-  }, [availableCallings, rol, userCallings]);
+  }, [availableCallings, myApplications.data, rol, userCallings]);
+
+  useEffect(() => {
+    const pairs: Record<string, boolean> = {};
+    callings?.forEach((calling) => {
+      const matchingApplicant = applications?.find(
+        (application) => application.callingId === calling.id,
+      );
+      pairs[calling.id.toString()] = !!matchingApplicant;
+    });
+    setClickedButtons(pairs);
+    // Si deseas actualizar algún estado o usar `pairs`, hazlo aquí.
+  }, [callings, applications]);
 
   const openAdviceModal = () => {
     setAdviceIsOpen(true);
@@ -131,10 +164,27 @@ export default function Callings() {
     }
   };
 
-  const handleApplyClick = () => {
-    if (currentUser?.role === 'employer') {
-    } else {
-      if (currentUser?.elegible === true) {
+  const handleApplyClick = (postulantId: string, callingId: string) => {
+    if (currentUser?.role !== 'employer') {
+      if (currentUser?.elegible) {
+        if (postulantId && callingId) {
+          const applicationData = {
+            postulantId: postulantId,
+            callingId: callingId,
+          };
+
+          newApplication.mutate(applicationData, {
+            onSuccess: () => {
+              // Actualizar el estado local y el texto del botón
+              setClickedButtons((prevStatus) => ({
+                ...prevStatus,
+                [callingId]: true,
+              }));
+            },
+          });
+        } else {
+          console.error('Postulant ID or Calling ID is missing');
+        }
       } else {
         openAdviceModal();
       }
@@ -195,24 +245,23 @@ export default function Callings() {
                 <div
                   className={
                     rol === 'applicant'
-                      ? `cursor-pointer drop-shadow-sm items-center flex flex-row gap-2 bg-blue-600 rounded-full justify-center p-1 w-28`
+                      ? `cursor-pointer drop-shadow-sm items-center flex flex-row gap-2 rounded-full justify-center p-1 w-28 ${
+                          clickedButtons[calling.id]
+                            ? 'bg-gray-600'
+                            : 'bg-blue-600'
+                        }`
                       : 'items-center flex flex-row gap-4 '
                   }
                   onClick={(event) => {
                     event.stopPropagation();
-                    handleApplyClick();
+                    handleApplyClick(currentUser!.id, calling.id);
                   }}
                 >
                   <svg
                     viewBox="0 0 640 512"
                     className={
-                      rol === 'applicant'
-                        ? `h-5 w-5 cursor-pointer fill-white`
-                        : 'hidden'
+                      rol === 'applicant' ? `h-5 w-5  fill-white` : 'hidden'
                     }
-                    onClick={(event) => {
-                      event.stopPropagation();
-                    }}
                   >
                     <path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0l57.4-43c23.9-59.8 79.7-103.3 146.3-109.8l13.9-10.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48L48 64zM294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176 0 384c0 35.3 28.7 64 64 64l296.2 0C335.1 417.6 320 378.5 320 336c0-5.6 .3-11.1 .8-16.6l-26.4 19.8zM640 336a144 144 0 1 0 -288 0 144 144 0 1 0 288 0zm-76.7-43.3c6.2 6.2 6.2 16.4 0 22.6l-72 72c-6.2 6.2-16.4 6.2-22.6 0l-40-40c-6.2-6.2-6.2-16.4 0-22.6s16.4-6.2 22.6 0L480 353.4l60.7-60.7c6.2-6.2 16.4-6.2 22.6 0z" />
                   </svg>

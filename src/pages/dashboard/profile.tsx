@@ -36,7 +36,6 @@ export default function Profile() {
       <Spinner text={status} />;
     }
   }, [status, session]);
-
   /**
    * Consultas a base de datos
    */
@@ -47,7 +46,9 @@ export default function Profile() {
       enabled: !!userId, // La consulta se habilita solo si userId tiene un valor truthy
     },
   );
-  const { data: currentUser } = trpc.user.findCurrentOne.useQuery();
+  const { data: currentUser } = trpc.user.findCurrentOne.useQuery(undefined, {
+    enabled: status === 'authenticated',
+  });
 
   /**
    * Funciones de apertura y cierre de modales

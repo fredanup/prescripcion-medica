@@ -48,26 +48,29 @@ model Document {
 }
 
 model Calling {
-  id           String   @id @default(cuid())
-  requirement  String
-  min_exp_work Int
-  User         User?    @relation(fields: [userId], references: [id])
-  userId       String?
-  createdAt    DateTime @default(now())
-  resultAt     DateTime
-  expiresAt    DateTime
+  id              String           @id @default(cuid())
+  requirement     String
+  min_exp_work    Int
+  User            User?            @relation(fields: [userId], references: [id])
+  userId          String?
+  createdAt       DateTime         @default(now())
+  resultAt        DateTime
+  expiresAt       DateTime
+  jobApplications JobApplication[]
 }
 
 model JobApplication {
-  id            String   @id @default(cuid())
-  status        String?
-  resumeKey     String?
-  createdAt     DateTime @default(now())
-  review        Boolean //Fue revisada la postulación?
-  interviewAt   DateTime
+  id            String    @id @default(cuid())
+  status        String    @default("pending") //approved or rejected or pending
+  resumeKey     String    @default("expediente") //expediente
+  createdAt     DateTime  @default(now())
+  review        Boolean   @default(false) //Fue revisada la postulación?
+  interviewAt   DateTime?
   interviewLink String?
-  Postulant     User?    @relation(fields: [postulantId], references: [id])
-  postulantId   String?
+  Postulant     User      @relation(fields: [postulantId], references: [id])
+  postulantId   String
+  Calling       Calling   @relation(fields: [callingId], references: [id])
+  callingId     String
 }
 
 model User {

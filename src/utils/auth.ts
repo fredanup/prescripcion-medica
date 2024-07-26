@@ -44,8 +44,19 @@ export const userBranchSchema = z.object({
     id:z.string(),  
   });
 
+  
+  export const createApplicationSchema = z.object({
+    postulantId: z.string(),
+    callingId: z.string(),
+  });
+
+  export const editApplicationSchema = createApplicationSchema.extend({
+    id:z.string(),  
+  });
+
   export type IUserBranch = z.infer<typeof userBranchSchema>;
   export type IEditUserBranch = z.infer<typeof editUserBranchSchema>;
   export type IBranch = z.infer<typeof branchSchema>;
   export type ICreateCalling = z.infer<typeof createCallingSchema>;
   export type IEditCalling = z.infer<typeof editCallingSchema>;
+  export type IEditApplication = z.infer<typeof editApplicationSchema>;

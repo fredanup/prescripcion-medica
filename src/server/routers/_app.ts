@@ -9,6 +9,7 @@ import { userRouter } from './user';
 import { branchRouter } from './branch';
 import { documentRouter } from './document';
 import { callingRouter } from './calling';
+import { applicationRouter } from './application';
 
 export const appRouter = createTRPCRouter({
   healthcheck: publicProcedure.query(() => 'yay!'),
@@ -18,7 +19,7 @@ export const appRouter = createTRPCRouter({
   document: documentRouter,
   calling:callingRouter,
   post: postRouter,
-
+  application: applicationRouter,
   randomNumber: publicProcedure.subscription(() => {
     return observable<number>((emit) => {
       const int = setInterval(() => {

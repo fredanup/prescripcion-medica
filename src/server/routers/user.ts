@@ -30,12 +30,12 @@ export const userRouter = createTRPCRouter({
     return user;
   }),
   findCurrentOne: protectedProcedure.query(async ({ ctx }) => {
-    console.log('Session in findCurrentOne:', ctx.session);
+    //console.log('Session in findCurrentOne:', ctx.session);
     if (!ctx.session?.user?.id) {
       throw new Error('Not authenticated');
     }
     const user = await prisma.user.findUnique({ where: { id: ctx.session.user.id } });
-    console.log('User in findCurrentOne:', user);
+    //console.log('User in findCurrentOne:', user);
     return user;
   }),
   updateUser: protectedProcedure
