@@ -1,5 +1,5 @@
-import { createTRPCRouter, protectedProcedure } from "server/trpc";
-import { createApplicationSchema } from "utils/auth";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createApplicationSchema } from "../../utils/auth";
 import { z } from "zod";
 
 export const applicationRouter = createTRPCRouter({
