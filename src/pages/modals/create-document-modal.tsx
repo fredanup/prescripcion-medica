@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { trpc } from 'utils/trpc';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, Accept } from 'react-dropzone';
 import axios from 'axios';
 
 const CreateDocumentModal = ({
@@ -55,8 +55,11 @@ const CreateDocumentModal = ({
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } =
     useDropzone({
       maxFiles: 1,
-      maxSize: 5 * 2 ** 30, // roughly 5GB
+      maxSize: 4 * 1024 * 1024, // roughly 5GB
       multiple: false,
+      accept: {
+        'application/pdf': ['.pdf'],
+      } as Accept,
       onDropAccepted: () => {
         fetchPresignedUrls({
           key: academicDocument, //A la ruta que obtuve le doy su clave

@@ -17,7 +17,9 @@ export const documentRouter = createTRPCRouter({
       const { key } = input;
       const putObjectCommand = new PutObjectCommand({
         Bucket: 'pacificsecurity',
-        Key: `documents/${userId}/${key}`, //key: es la ruta dónde se alojará el objeto
+        Key: `documents/${userId}/${key}`,
+        ContentType: 'application/pdf', // Ensure it's a PDF
+        ContentLength: 4 * 1024 * 1024, // Limit to 4 MB
       });
       return await getSignedUrl(s3, putObjectCommand);
     }),

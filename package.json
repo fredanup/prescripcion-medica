@@ -55,8 +55,11 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "next": "^14.2.5",
     "next-auth": "^4.24.7",
+    "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
     "react-datepicker": "^4.25.0",
     "react-dom": "^18.3.1",
@@ -92,7 +95,6 @@
     "tailwindcss": "^3.3.0",
     "typescript": "^5.5.3",
     "webpack": "^5.93.0"
-    
   },
   "publishConfig": {
     "access": "restricted"
