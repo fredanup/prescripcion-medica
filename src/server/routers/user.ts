@@ -6,8 +6,8 @@ import { z } from 'zod';
 
 export const userRouter = createTRPCRouter({
   //Listar a los usuarios con su sucursal adjunta
-  findManyUserBranch: protectedProcedure.query(async () => {
-    const users = await prisma.user.findMany({
+  findManyUserBranch: protectedProcedure.query(async ({ctx}) => {
+    const users = await ctx.prisma.user.findMany({
       select:{
         id:true,
         name:true,
@@ -34,7 +34,7 @@ export const userRouter = createTRPCRouter({
     if (!ctx.session?.user?.id) {
       throw new Error('Not authenticated');
     }
-    const user = await prisma.user.findUnique({ where: { id: ctx.session.user.id } });
+    const user = await ctx.prisma.user.findUnique({ where: { id: ctx.session.user.id } });
     //console.log('User in findCurrentOne:', user);
     return user;
   }),

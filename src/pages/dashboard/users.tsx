@@ -14,7 +14,7 @@ import { trpc } from 'utils/trpc';
 
 export default function Users() {
   //Obtenemos la sesión de la bd
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   //Hook de estado que controla la apertura del modal de edición
   const [editIsOpen, setEditIsOpen] = useState(false);
   //Hook de estado que controla la apertura del modal de eliminación
@@ -25,11 +25,13 @@ export default function Users() {
    * Consultas a base de datos
    */
   //Obtener todos los usuarios creados con su sucursal
-  const { data: users } = trpc.user.findManyUserBranch.useQuery();
+  const { data: users } = trpc.user.findManyUserBranch.useQuery(undefined, {
+    enabled: status === 'authenticated',
+  });
   //Obtener el usuario actual
-  const { data: currentUser } = trpc.user.findOne.useQuery(
-    session?.user?.id ?? '',
-  );
+  const { data: currentUser } = trpc.user.findCurrentOne.useQuery(undefined, {
+    enabled: status === 'authenticated',
+  });
 
   //Función de selección de registro y apertura de modal de edición
   const openEditModal = (user: IUserBranch) => {
@@ -88,7 +90,7 @@ export default function Users() {
   return (
     <>
       <Layout>
-        <FormTitle text={'Gestión de usuarios' + selectedCardIndex} />
+        <FormTitle text={'Gestión de usuarios ' + selectedCardIndex} />
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead className="border-b border-gray-200 text-left text-black text-sm font-light">
@@ -159,7 +161,7 @@ export default function Users() {
           />
         )}
 
-        {deleteIsOpen && selectedUser?.id !== session.user.id && (
+        {deleteIsOpen && selectedUser?.id !== currentUser?.id && (
           <DeleteUserModal
             isOpen={deleteIsOpen}
             onClose={closeDeleteModal}
@@ -167,7 +169,7 @@ export default function Users() {
           />
         )}
 
-        {deleteIsOpen && selectedUser?.id === session.user.id && (
+        {deleteIsOpen && selectedUser?.id === currentUser?.id && (
           <ErrorDeletingUser isOpen={deleteIsOpen} onClose={closeDeleteModal} />
         )}
       </Layout>
