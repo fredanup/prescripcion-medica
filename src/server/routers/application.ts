@@ -47,6 +47,32 @@ export const applicationRouter = createTRPCRouter({
       throw new Error("Error fetching my applications");
     }
   }),
+  getApplicantsByCalling: protectedProcedure.input(z.object({callingId:z.string()})).query(async ({ctx,input})=>{
+    const {callingId}=input;
+    try{
+      const applicants=await ctx.prisma.jobApplication.findMany({
+        select:{
+          Postulant:{
+            select:{
+              name:true,
+              lastName:true,
+              image:true,
+              email:true
+            }
+          },
+          resumeKey:true,
+        },   
+        where:{
+          callingId:callingId,
+          status:"pending"
+        }
+      })
+      return applicants;
+    }
+    catch (error) {
+      console.log(error);
+    }
+  }),
 
   createApplication: protectedProcedure.input(
     createApplicationSchema

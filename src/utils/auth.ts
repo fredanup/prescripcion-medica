@@ -54,9 +54,22 @@ export const userBranchSchema = z.object({
     id:z.string(),  
   });
 
+  export const jobApplicationSchema = z.object({
+    Postulant: z.object({
+      name: z.string().nullable(),
+      lastName: z.string().nullable(),
+      image: z.string().nullable(),
+      email: z.string(),
+    }),
+    resumeKey: z.string(),
+  });
+
+
+
   export type IUserBranch = z.infer<typeof userBranchSchema>;
   export type IEditUserBranch = z.infer<typeof editUserBranchSchema>;
   export type IBranch = z.infer<typeof branchSchema>;
   export type ICreateCalling = z.infer<typeof createCallingSchema>;
   export type IEditCalling = z.infer<typeof editCallingSchema>;
   export type IEditApplication = z.infer<typeof editApplicationSchema>;
+  export type IJobApplication=z.infer<typeof jobApplicationSchema>;
