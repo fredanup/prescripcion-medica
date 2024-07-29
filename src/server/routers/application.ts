@@ -1,5 +1,5 @@
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { createApplicationSchema } from "../../utils/auth";
+import { createApplicationSchema, editJobApplicationSchema } from "../../utils/auth";
 import { z } from "zod";
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { PDFDocument } from 'pdf-lib';
@@ -52,6 +52,7 @@ export const applicationRouter = createTRPCRouter({
     try{
       const applicants=await ctx.prisma.jobApplication.findMany({
         select:{
+          id:true,
           Postulant:{
             select:{
               name:true,
@@ -61,10 +62,14 @@ export const applicationRouter = createTRPCRouter({
             }
           },
           resumeKey:true,
+          interviewAt:true,
+          interviewLink:true
         },   
         where:{
           callingId:callingId,
-          status:"pending"
+          status:{
+            in: ["pending","approved"]
+          }
         }
       })
       return applicants;
@@ -73,7 +78,43 @@ export const applicationRouter = createTRPCRouter({
       console.log(error);
     }
   }),
-
+  acceptApplication:protectedProcedure.input(editJobApplicationSchema).mutation(async ({ctx,input})=>{
+    
+    try{
+      await ctx.prisma.jobApplication.update({
+        data: {
+          status:"approved",
+          interviewAt:input.interviewAt,
+          interviewLink:input.interviewLink
+        },
+        where: {
+          id:input.id,
+         
+        }
+      })
+    }
+    catch{
+      throw new Error("There was an error trying to update the record");
+    }  
+    return { success: true };
+  }),
+  rejectApplication:protectedProcedure.input(z.object({jobApplicationId:z.string()})).mutation(async ({ctx,input})=>{
+    const {jobApplicationId}=input;
+    try{
+      await ctx.prisma.jobApplication.update({
+        data: {
+          status:"rejected",
+        },
+        where: {
+          id:jobApplicationId
+        }
+      })
+    }
+    catch{
+      throw new Error("There was an error trying to update the record");
+    }  
+    return { success: true };
+  }),
   createApplication: protectedProcedure.input(
     createApplicationSchema
   ).mutation(async ({ ctx, input }) => {

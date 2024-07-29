@@ -55,6 +55,7 @@ export const userBranchSchema = z.object({
   });
 
   export const jobApplicationSchema = z.object({
+    id:z.string(),
     Postulant: z.object({
       name: z.string().nullable(),
       lastName: z.string().nullable(),
@@ -62,9 +63,15 @@ export const userBranchSchema = z.object({
       email: z.string(),
     }),
     resumeKey: z.string(),
+    interviewAt:z.date().nullable(),
+    interviewLink:z.string().nullable()
   });
 
-
+  export const editJobApplicationSchema = z.object({
+    id:z.string(),
+    interviewAt:z.date().nullable(),
+    interviewLink:z.string().nullable()
+  });
 
   export type IUserBranch = z.infer<typeof userBranchSchema>;
   export type IEditUserBranch = z.infer<typeof editUserBranchSchema>;
@@ -73,3 +80,4 @@ export const userBranchSchema = z.object({
   export type IEditCalling = z.infer<typeof editCallingSchema>;
   export type IEditApplication = z.infer<typeof editApplicationSchema>;
   export type IJobApplication=z.infer<typeof jobApplicationSchema>;
+  export type IEditJobApplication=z.infer<typeof editJobApplicationSchema>;

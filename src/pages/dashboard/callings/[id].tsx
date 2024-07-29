@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import ConfirmationModal from 'pages/modals/confirmation-modal';
 import { useEffect, useState } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
@@ -10,7 +11,8 @@ import { trpc } from 'utils/trpc';
 export default function Calling() {
   const router = useRouter();
   const { id } = router.query; // Obtener el parámetro `id` de la ruta
-
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [applicationId, setApplicationId] = useState<string>('');
   // Asegúrate de que callingId esté definido antes de usarlo en la consulta
   const { data: callingApplicants } =
     trpc.application.getApplicantsByCalling.useQuery(
@@ -31,7 +33,15 @@ export default function Calling() {
       setApplicants(callingApplicants);
     }
   }, [callingApplicants]); // Agregar `callingApplicants.data` como dependencia
+  const openConfirmationModal = (applicationId: string) => {
+    setIsConfirmed(true);
+    setApplicationId(applicationId);
+  };
 
+  const closeConfirmationModal = () => {
+    setIsConfirmed(false);
+    setApplicationId('');
+  };
   return (
     <>
       <Layout>
@@ -57,6 +67,15 @@ export default function Calling() {
                   <p className="text-gray-500 text-sm">
                     {applicant.Postulant.email}
                   </p>
+                  <p className="text-gray-500 text-sm">
+                    {applicant.interviewAt?.toLocaleDateString() ?? ''}
+                  </p>
+                  <Link
+                    className="text-gray-500 text-sm"
+                    href={applicant.interviewLink ?? ''}
+                  >
+                    {applicant.interviewLink ?? ''}
+                  </Link>
                 </div>
               </div>
               <Link
@@ -80,6 +99,7 @@ export default function Calling() {
                 className={`h-6 w-6 cursor-pointer fill-cyan-500`}
                 onClick={(event) => {
                   event.stopPropagation();
+                  openConfirmationModal(applicant.id);
                 }}
               >
                 <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM625 177L497 305c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L591 143c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" />
@@ -97,6 +117,13 @@ export default function Calling() {
             </div>
           </div>
         ))}
+        {isConfirmed && (
+          <ConfirmationModal
+            isOpen={isConfirmed}
+            onClose={closeConfirmationModal}
+            applicationId={applicationId}
+          />
+        )}
       </Layout>
     </>
   );
