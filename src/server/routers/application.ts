@@ -65,6 +65,43 @@ export const applicationRouter = createTRPCRouter({
       throw new Error("Error fetching my applications");
     }
   }),
+  getApplicationResults:protectedProcedure.query(async ({ctx})=>{
+    if (!ctx.session?.user?.id) {
+      throw new Error('Not authenticated');
+    }
+    try {
+      const appResults=await ctx.prisma.jobApplication.findMany({
+        select:{
+           Calling:{
+            select:{
+              requirement:true,              
+              User:{
+                select:{
+                  name:true,
+                  lastName:true,
+                  email:true
+                }
+              },                            
+            }
+           },
+           interviewAt:true,
+           interviewLink:true,
+           resumeKey:true,
+           status:true,
+           review:true
+        },
+        where:{
+          status:{
+            in: ["approved","rejected"]
+          }
+        }
+      })
+      return appResults;
+    } catch (error) {
+      console.log(error);
+    }
+  })
+  ,
   getApplicantsByCalling: protectedProcedure.input(z.object({callingId:z.string()})).query(async ({ctx,input})=>{
     const {callingId}=input;
     try{
