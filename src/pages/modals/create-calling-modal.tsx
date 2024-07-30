@@ -24,13 +24,13 @@ export default function CreateCallingModal({
 
   const createCalling = trpc.calling.createCalling.useMutation({
     onSettled: async () => {
-      await utils.calling.findUserCallings.invalidate();
+      await utils.calling.findYourCallings.invalidate();
     },
   });
 
   const updateCalling = trpc.calling.updateCalling.useMutation({
     onSettled: async () => {
-      await utils.calling.findUserCallings.invalidate();
+      await utils.calling.findYourCallings.invalidate();
     },
   });
 

@@ -1,9 +1,8 @@
-import { FormEvent, useState } from 'react';
-import ReactDatePicker from 'react-datepicker';
+import { FormEvent } from 'react';
 import FormTitle from 'utilities/form-title';
 import { trpc } from 'utils/trpc';
 import 'react-datepicker/dist/react-datepicker.css';
-export default function ConfirmationModal({
+export default function RejectModal({
   isOpen,
   onClose,
   applicationId,
@@ -12,14 +11,13 @@ export default function ConfirmationModal({
   onClose: () => void;
   applicationId: string;
 }) {
-  const acceptApplicant = trpc.application.acceptApplication.useMutation({
+  const utils = trpc.useContext();
+  const rejectApplicant = trpc.application.rejectApplication.useMutation({
     onSettled: async () => {
       await utils.application.getApplicantsByCalling.invalidate();
     },
   });
-  const [interviewAt, setInterviewAt] = useState<Date | null>(null);
-  const [interviewLink, setInterviewLink] = useState<string | null>('');
-  const utils = trpc.useContext();
+
   //Estilizado del fondo detrás del modal. Evita al usuario salirse del modal antes de elegir alguna opción
   const overlayClassName = isOpen
     ? 'fixed top-0 left-0 w-full h-full rounded-lg bg-gray-800 opacity-60 z-20'
@@ -32,11 +30,9 @@ export default function ConfirmationModal({
     event.preventDefault();
     const applicationData = {
       id: applicationId,
-      interviewAt: interviewAt,
-      interviewLink: interviewLink,
     };
     if (applicationId) {
-      acceptApplicant.mutate(applicationData);
+      rejectApplicant.mutate(applicationData);
       onClose();
     }
   };
@@ -51,36 +47,10 @@ export default function ConfirmationModal({
             onSubmit={handleSubmit}
           >
             <div className="flex flex-col gap-2">
-              <FormTitle text="Confirmar elección" />
+              <FormTitle text="Confirmar rechazo de participante" />
               <p className="text-justify text-base font-light text-gray-500">
                 Complete los campos presentados a continuación:
               </p>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-black text-sm font-bold">
-                  Link para la entrevista:
-                </label>
-                <input
-                  type="text"
-                  className="focus:shadow-outline w-full appearance-none rounded-lg border px-2 py-1 leading-tight text-gray-700 focus:outline-none"
-                  value={interviewLink ?? ''}
-                  onChange={(event) => setInterviewLink(event.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-black text-sm font-bold">
-                  Fecha de la entrevista:
-                </label>
-                <ReactDatePicker
-                  selected={interviewAt}
-                  onChange={(date) => setInterviewAt(date)}
-                  className="focus:shadow-outline w-full appearance-none rounded-lg border px-2 py-1 leading-tight text-gray-700 focus:outline-none"
-                  dateFormat="dd/MM/yyyy"
-                  required
-                />
-              </div>
 
               <div className="mt-4 pt-4 flex flex-row justify-end gap-2 border-t border-gray-200">
                 <button

@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ConfirmationModal from 'pages/modals/confirmation-modal';
+import RejectModal from 'pages/modals/reject-modal';
 import { useEffect, useState } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
@@ -12,6 +13,8 @@ export default function Calling() {
   const router = useRouter();
   const { id } = router.query; // Obtener el parámetro `id` de la ruta
   const [isConfirmed, setIsConfirmed] = useState(false);
+
+  const [isReject, setIsReject] = useState(false);
   const [applicationId, setApplicationId] = useState<string>('');
   // Asegúrate de que callingId esté definido antes de usarlo en la consulta
   const { data: callingApplicants } =
@@ -33,6 +36,7 @@ export default function Calling() {
       setApplicants(callingApplicants);
     }
   }, [callingApplicants]); // Agregar `callingApplicants.data` como dependencia
+
   const openConfirmationModal = (applicationId: string) => {
     setIsConfirmed(true);
     setApplicationId(applicationId);
@@ -42,6 +46,17 @@ export default function Calling() {
     setIsConfirmed(false);
     setApplicationId('');
   };
+
+  const openRejectModal = (applicationId: string) => {
+    setIsReject(true);
+    setApplicationId(applicationId);
+  };
+
+  const closeRejectModal = () => {
+    setIsReject(false);
+    setApplicationId('');
+  };
+
   return (
     <>
       <Layout>
@@ -96,7 +111,11 @@ export default function Calling() {
             <div className="flex flex-row gap-6 ml-auto">
               <svg
                 viewBox="0 0 640 512"
-                className={`h-6 w-6 cursor-pointer fill-cyan-500`}
+                className={`${
+                  applicant.interviewLink === null
+                    ? 'h-6 w-6 cursor-pointer fill-cyan-500'
+                    : 'hidden'
+                }`}
                 onClick={(event) => {
                   event.stopPropagation();
                   openConfirmationModal(applicant.id);
@@ -110,6 +129,7 @@ export default function Calling() {
                 className={`h-6 w-6 cursor-pointer fill-pink-500`}
                 onClick={(event) => {
                   event.stopPropagation();
+                  openRejectModal(applicant.id);
                 }}
               >
                 <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM471 143c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" />
@@ -121,6 +141,13 @@ export default function Calling() {
           <ConfirmationModal
             isOpen={isConfirmed}
             onClose={closeConfirmationModal}
+            applicationId={applicationId}
+          />
+        )}
+        {isReject && (
+          <RejectModal
+            isOpen={isReject}
+            onClose={closeRejectModal}
             applicationId={applicationId}
           />
         )}

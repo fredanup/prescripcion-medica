@@ -24,7 +24,25 @@ export const applicationRouter = createTRPCRouter({
       throw new Error("Error fetching calling applications");
     }
   }),
-
+  countApplicantsOfMyCallings: protectedProcedure.query(async ({ctx})=>{
+    if (!ctx.session?.user?.id) {
+      throw new Error('Not authenticated');
+    }
+  
+    const applicantCounts = await ctx.prisma.jobApplication.groupBy({
+      by: ['callingId'], // Agrupa por el campo que referencia la convocatoria
+      _count: {
+        _all: true, // Cuenta todas las filas (postulaciones)
+      },
+      where: {
+        Calling: {
+          userId: ctx.session.user.id, // Filtra por el ID del usuario actual
+        }
+      },
+    });    
+    
+    return applicantCounts;
+  }),
   findMyApplications: protectedProcedure
   .query(async ({ ctx }) => {
     if (!ctx.session?.user?.id) {
@@ -98,15 +116,16 @@ export const applicationRouter = createTRPCRouter({
     }  
     return { success: true };
   }),
-  rejectApplication:protectedProcedure.input(z.object({jobApplicationId:z.string()})).mutation(async ({ctx,input})=>{
-    const {jobApplicationId}=input;
+  
+  rejectApplication:protectedProcedure.input(z.object({id:z.string()})).mutation(async ({ctx,input})=>{
+    
     try{
       await ctx.prisma.jobApplication.update({
         data: {
           status:"rejected",
         },
         where: {
-          id:jobApplicationId
+          id:input.id
         }
       })
     }

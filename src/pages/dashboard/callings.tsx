@@ -29,13 +29,21 @@ export default function Callings() {
     },
   );
 
+  const {
+    data: applicantsOfMyCallings,
+    isLoading: isLoadingCount,
+    isError,
+  } = trpc.application.countApplicantsOfMyCallings.useQuery();
+
   const [editIsOpen, setEditIsOpen] = useState(false);
   const [adviceIsOpen, setAdviceIsOpen] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
   const [deleteIsOpen, setDeleteIsOpen] = useState(false);
   const [clickedButtons, setClickedButtons] = useState<Record<string, boolean>>(
     {},
   );
+
   const [rol, setRole] = useState<string | undefined>(undefined);
   //Hook de estado que controla la expansión de llave angular
   const [expandedStates, setExpandedStates] = useState<boolean[]>([]);
@@ -69,8 +77,15 @@ export default function Callings() {
     }
   }, [currentUser, router, status]);
 
+  useEffect(() => {
+    if (!isLoadingCount && !isError) {
+      // Lógica para invalidar o actualizar datos
+      utils.calling.findYourCallings.invalidate();
+    }
+  }, [isError, isLoadingCount, utils.calling.findYourCallings]);
+
   //Listar y editar deben tener atributos similares, es decir, el tipo de userCallings debe coincidir con el de IEditCalling
-  const { data: userCallings } = trpc.calling.findUserCallings.useQuery();
+  const { data: userCallings } = trpc.calling.findYourCallings.useQuery();
   const { data: availableCallings } =
     trpc.calling.findAvailableCallings.useQuery();
 
@@ -100,11 +115,15 @@ export default function Callings() {
 
   useEffect(() => {
     const pairs: Record<string, boolean> = {};
+
+    let count = 0;
     callings?.forEach((calling) => {
       const matchingApplicant = applications?.find(
         (application) => application.callingId === calling.id,
       );
+      matchingApplicant ? (count = count + 1) : null;
       pairs[calling.id.toString()] = !!matchingApplicant;
+      //countPairs[calling.id.toString()]=matchingApplicant?(count=count+1):(null)
     });
     setClickedButtons(pairs);
     // Si deseas actualizar algún estado o usar `pairs`, hazlo aquí.
@@ -171,6 +190,16 @@ export default function Callings() {
 
   const closeIsSuccessModal = () => {
     setIsSuccess(false);
+  };
+
+  const countApplicants = (callingId: string): string => {
+    const result = applicantsOfMyCallings?.find(
+      (applicant) => applicant.callingId === callingId,
+    );
+
+    return result && typeof result._count?._all === 'number'
+      ? result._count._all.toString()
+      : '0';
   };
 
   const handleApplyClick = (postulantId: string, callingId: string) => {
@@ -296,7 +325,7 @@ export default function Callings() {
                         : 'hidden'
                     }
                   >
-                    200
+                    {countApplicants(calling.id)}
                   </label>
 
                   {/**Botón editar */}
