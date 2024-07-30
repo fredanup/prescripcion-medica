@@ -14,7 +14,7 @@ export default function DeleteCallingModal({
   const utils = trpc.useContext();
   const deletedCalling = trpc.calling.deleteOneCalling.useMutation({
     onSettled: async () => {
-      await utils.calling.findUserCallings.invalidate();
+      await utils.calling.findYourCallings.invalidate();
     },
   });
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
