@@ -93,7 +93,8 @@ export const applicationRouter = createTRPCRouter({
         where:{
           status:{
             in: ["approved","rejected"]
-          }
+          },
+          postulantId:ctx.session.user.id
         }
       })
       return appResults;

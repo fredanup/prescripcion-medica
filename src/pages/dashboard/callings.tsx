@@ -85,9 +85,16 @@ export default function Callings() {
   }, [isError, isLoadingCount, utils.calling.findYourCallings]);
 
   //Listar y editar deben tener atributos similares, es decir, el tipo de userCallings debe coincidir con el de IEditCalling
-  const { data: userCallings } = trpc.calling.findYourCallings.useQuery();
+  const { data: userCallings } = trpc.calling.findYourCallings.useQuery(
+    undefined,
+    {
+      enabled: status === 'authenticated',
+    },
+  );
   const { data: availableCallings } =
-    trpc.calling.findAvailableCallings.useQuery();
+    trpc.calling.findAvailableCallings.useQuery(undefined, {
+      enabled: status === 'authenticated',
+    });
 
   const myApplications = trpc.application.findMyApplications.useQuery(
     undefined,
