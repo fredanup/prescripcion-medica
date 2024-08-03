@@ -51,26 +51,9 @@ export default function Users() {
   const closeDeleteModal = () => {
     setDeleteIsOpen(false);
   };
-  //Hook de estado utilizado para recordar qué card acaba de seleccionar el usuario
-
-  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
-    null,
-  );
 
   //Inicialización de ruta
   const router = useRouter();
-  //Nota: En cuanto a jerarquía de tipos tenemos: De más simple a más complejo-->Calling-->Edit-->UserCalling
-  /**
-   *
-   * @param data Parámetro que recibe el registro seleccionado por el usuario.
-   * Dicho registro se envía a la función onCardSelect que es argumento del componente y es puente hacia el componente que lo está llamando
-   * de esta manera el componente que lo llama tiene acceso a esta información.
-   * Además guarda el valor del índice de la card seleccionada por el usuario. Este valor se utilizará posteriormente para dar color
-   * a la card y el usuario entienda en qué card se encuentra
-   */
-  const handleCardClick = (data: IUserBranch, index: number | null) => {
-    setSelectedCardIndex(index);
-  };
 
   //Redireccion al usuario a Main
   useEffect(() => {
@@ -90,7 +73,7 @@ export default function Users() {
   return (
     <>
       <Layout>
-        <FormTitle text={'Gestión de usuarios ' + selectedCardIndex} />
+        <FormTitle text={'Gestión de usuarios '} />
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead className="border-b border-gray-200 text-left text-black text-sm font-light">
@@ -106,7 +89,6 @@ export default function Users() {
                 <tr
                   className="border-b border-gray-200 text-sm font-light"
                   key={index}
-                  onClick={() => handleCardClick(user, index)}
                 >
                   <td className="py-4 pr-2 flex flex-row gap-3 items-center text-sm font-light">
                     <Image
