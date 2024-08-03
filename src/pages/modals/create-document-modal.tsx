@@ -140,7 +140,7 @@ const CreateDocumentModal = ({
             <h1 className="text-xl font-medium text-black">Subir documento</h1>
             <p className="text-justify text-base font-light text-gray-500">
               Seleccione el documento a subir y complete los datos del
-              formulario
+              formulario {academicDocument}
             </p>
 
             <div
