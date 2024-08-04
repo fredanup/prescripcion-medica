@@ -75,7 +75,9 @@ export default function Profile() {
   const urlDoc = (doc: string, userId: string) => {
     const founded = data?.find((record) => record.key === doc);
     if (founded !== undefined) {
-      return `https://pacificsecurity.s3.amazonaws.com/documents/${userId}/${founded?.key}`;
+      // Reemplaza todos los espacios por + en la key
+      const formattedKey = founded.key?.replace(/ /g, '+');
+      return `https://pacificsecurity.s3.amazonaws.com/documents/${userId}/${formattedKey}`;
     } else {
       return null;
     }
