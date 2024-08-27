@@ -280,9 +280,8 @@ export default function Callings() {
         <>
           {callings?.map((calling, index) => (
             <div
-              className="flex flex-col gap-2 p-6 rounded-lg drop-shadow-md bg-white mb-4"
+              className="flex flex-col gap-2 p-4 rounded-lg drop-shadow-md bg-white mb-4"
               key={index}
-              onClick={() => handleClick(calling.id)}
             >
               <div className="flex flex-row justify-between items-center">
                 <h3 className="text-black text-base font-medium">
@@ -291,7 +290,7 @@ export default function Callings() {
                 <div
                   className={
                     rol === 'applicant'
-                      ? `cursor-pointer drop-shadow-sm items-center flex flex-row gap-2 rounded-full justify-center p-1 w-28 ${
+                      ? `cursor-pointer drop-shadow-sm items-center flex flex-row gap-2 rounded-full justify-center p-2 w-28 ${
                           clickedButtons[calling.id]
                             ? 'bg-gray-600'
                             : 'bg-blue-600'
@@ -305,66 +304,87 @@ export default function Callings() {
                       : handleApplyClick(currentUser!.id, calling.id);
                   }}
                 >
-                  <svg
-                    viewBox="0 0 640 512"
-                    className={
-                      rol === 'applicant' ? `h-5 w-5  fill-white` : 'hidden'
-                    }
-                  >
-                    <path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0l57.4-43c23.9-59.8 79.7-103.3 146.3-109.8l13.9-10.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48L48 64zM294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176 0 384c0 35.3 28.7 64 64 64l296.2 0C335.1 417.6 320 378.5 320 336c0-5.6 .3-11.1 .8-16.6l-26.4 19.8zM640 336a144 144 0 1 0 -288 0 144 144 0 1 0 288 0zm-76.7-43.3c6.2 6.2 6.2 16.4 0 22.6l-72 72c-6.2 6.2-16.4 6.2-22.6 0l-40-40c-6.2-6.2-6.2-16.4 0-22.6s16.4-6.2 22.6 0L480 353.4l60.7-60.7c6.2-6.2 16.4-6.2 22.6 0z" />
-                  </svg>
+                  <div className="flex flex-row gap-2 items-center">
+                    <svg
+                      viewBox="0 0 640 512"
+                      className={
+                        rol === 'applicant'
+                          ? `h-5 w-5 fill-white ml-4`
+                          : 'hidden'
+                      }
+                    >
+                      <path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0l57.4-43c23.9-59.8 79.7-103.3 146.3-109.8l13.9-10.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48L48 64zM294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176 0 384c0 35.3 28.7 64 64 64l296.2 0C335.1 417.6 320 378.5 320 336c0-5.6 .3-11.1 .8-16.6l-26.4 19.8zM640 336a144 144 0 1 0 -288 0 144 144 0 1 0 288 0zm-76.7-43.3c6.2 6.2 6.2 16.4 0 22.6l-72 72c-6.2 6.2-16.4 6.2-22.6 0l-40-40c-6.2-6.2-6.2-16.4 0-22.6s16.4-6.2 22.6 0L480 353.4l60.7-60.7c6.2-6.2 16.4-6.2 22.6 0z" />
+                    </svg>
 
-                  <label
-                    className={
-                      rol === 'applicant'
-                        ? `text-white text-sm font-medium cursor-pointer `
-                        : 'hidden'
-                    }
-                  >
-                    {clickedButtons[calling.id] ? 'Enviado' : 'Postular'}
-                  </label>
+                    <label
+                      className={
+                        rol === 'applicant'
+                          ? `text-white text-sm font-medium cursor-pointer `
+                          : 'hidden'
+                      }
+                    >
+                      {clickedButtons[calling.id] ? 'Enviado' : 'Postular'}
+                    </label>
+                  </div>
 
-                  {/**Contador */}
-                  <label
-                    className={
-                      rol !== 'applicant'
-                        ? ` bg-red-500 rounded-lg py-0 px-2 text-white font-semibold `
-                        : 'hidden'
-                    }
-                  >
-                    {countApplicants(calling.id)}
-                  </label>
+                  <div className="flex flex-row gap-2 items-center ">
+                    {/**Contador */}
+                    <div
+                      className="flex flex-row gap-2 bg-red-500 rounded-lg items-center px-2 cursor-pointer"
+                      onClick={() => handleClick(calling.id)}
+                    >
+                      <label
+                        className={
+                          rol !== 'applicant'
+                            ? `cursor-pointer text-white font-semibold `
+                            : 'hidden'
+                        }
+                      >
+                        {countApplicants(calling.id)}
+                      </label>
+                      <svg
+                        viewBox="0 0 640 512"
+                        className={
+                          rol !== 'applicant'
+                            ? `h-4 w-4 cursor-pointer fill-white`
+                            : 'hidden'
+                        }
+                      >
+                        <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM609.3 512l-137.8 0c5.4-9.4 8.6-20.3 8.6-32l0-8c0-60.7-27.1-115.2-69.8-151.8c2.4-.1 4.7-.2 7.1-.2l61.4 0C567.8 320 640 392.2 640 481.3c0 17-13.8 30.7-30.7 30.7zM432 256c-31 0-59-12.6-79.3-32.9C372.4 196.5 384 163.6 384 128c0-26.8-6.6-52.1-18.3-74.3C384.3 40.1 407.2 32 432 32c61.9 0 112 50.1 112 112s-50.1 112-112 112z" />
+                      </svg>
+                    </div>
 
-                  {/**Botón editar */}
-                  <svg
-                    viewBox="0 0 512 512"
-                    className={
-                      rol !== 'applicant'
-                        ? `h-4 w-4 cursor-pointer fill-gray-500`
-                        : 'hidden'
-                    }
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openEditModal(calling);
-                    }}
-                  >
-                    <path d="M373.5 27.1C388.5 9.9 410.2 0 433 0c43.6 0 79 35.4 79 79c0 22.8-9.9 44.6-27.1 59.6L277.7 319l-10.3-10.3-64-64L193 234.3 373.5 27.1zM170.3 256.9l10.4 10.4 64 64 10.4 10.4-19.2 83.4c-3.9 17.1-16.9 30.7-33.8 35.4L24.4 510.3l95.4-95.4c2.6 .7 5.4 1.1 8.3 1.1c17.7 0 32-14.3 32-32s-14.3-32-32-32s-32 14.3-32 32c0 2.9 .4 5.6 1.1 8.3L1.7 487.6 51.5 310c4.7-16.9 18.3-29.9 35.4-33.8l83.4-19.2z" />
-                  </svg>
-                  {/**Botón eliminar */}
-                  <svg
-                    viewBox="0 0 448 512"
-                    className={
-                      rol !== 'applicant'
-                        ? `h-4 w-4 cursor-pointer fill-gray-500`
-                        : 'hidden'
-                    }
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openDeleteModal(calling);
-                    }}
-                  >
-                    <path d="M135.2 17.7C140.6 6.8 151.7 0 163.8 0H284.2c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64S14.3 32 32 32h96l7.2-14.3zM32 128H416V448c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm96 64c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16z" />
-                  </svg>
+                    {/**Botón editar */}
+                    <svg
+                      viewBox="0 0 512 512"
+                      className={
+                        rol !== 'applicant'
+                          ? `h-4 w-4 cursor-pointer fill-gray-500`
+                          : 'hidden'
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openEditModal(calling);
+                      }}
+                    >
+                      <path d="M373.5 27.1C388.5 9.9 410.2 0 433 0c43.6 0 79 35.4 79 79c0 22.8-9.9 44.6-27.1 59.6L277.7 319l-10.3-10.3-64-64L193 234.3 373.5 27.1zM170.3 256.9l10.4 10.4 64 64 10.4 10.4-19.2 83.4c-3.9 17.1-16.9 30.7-33.8 35.4L24.4 510.3l95.4-95.4c2.6 .7 5.4 1.1 8.3 1.1c17.7 0 32-14.3 32-32s-14.3-32-32-32s-32 14.3-32 32c0 2.9 .4 5.6 1.1 8.3L1.7 487.6 51.5 310c4.7-16.9 18.3-29.9 35.4-33.8l83.4-19.2z" />
+                    </svg>
+                    {/**Botón eliminar */}
+                    <svg
+                      viewBox="0 0 448 512"
+                      className={
+                        rol !== 'applicant'
+                          ? `h-4 w-4 cursor-pointer fill-gray-500`
+                          : 'hidden'
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openDeleteModal(calling);
+                      }}
+                    >
+                      <path d="M135.2 17.7C140.6 6.8 151.7 0 163.8 0H284.2c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64S14.3 32 32 32h96l7.2-14.3zM32 128H416V448c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm96 64c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16V432c0 8.8 7.2 16 16 16s16-7.2 16-16V208c0-8.8-7.2-16-16-16z" />
+                    </svg>
+                  </div>
                 </div>
               </div>
 
@@ -374,11 +394,14 @@ export default function Callings() {
                     Años de experiencia: De {calling.min_exp_work} a más
                   </li>
                   <li className="text-gray-500 text-sm">
-                    Fecha límite: {calling.expiresAt.toLocaleDateString()}
+                    Resultados:
+                    {calling.resultAt.toLocaleDateString()}
                   </li>
                   <li className="text-gray-500 text-sm">
                     <div className="flex flex-row justify-between">
-                      <p>Resultados: {calling.resultAt.toLocaleDateString()}</p>
+                      <p>
+                        Expiración: {calling.expiresAt.toLocaleDateString()}
+                      </p>
                       <div className="flex flex-row gap-2">
                         <p className="text-black text-sm font-medium">
                           Requisitos

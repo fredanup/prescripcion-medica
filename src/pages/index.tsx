@@ -77,7 +77,7 @@ export default function Home() {
                 height={30}
                 alt="Logo"
               />
-              <label>Iniciar sesión</label>
+              <label className="cursor-pointer">Iniciar sesión</label>
             </div>
           </div>
         </>

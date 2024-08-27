@@ -1,8 +1,9 @@
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { createApplicationSchema, editJobApplicationSchema } from "../../utils/auth";
 import { z } from "zod";
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { PDFDocument } from 'pdf-lib';
+import { prisma } from "server/prisma";
 
 export const applicationRouter = createTRPCRouter({
   // Listar a los usuarios con su sucursal adjunta
@@ -103,10 +104,10 @@ export const applicationRouter = createTRPCRouter({
     }
   })
   ,
-  getApplicantsByCalling: protectedProcedure.input(z.object({callingId:z.string()})).query(async ({ctx,input})=>{
+  getApplicantsByCalling: publicProcedure.input(z.object({callingId:z.string()})).query(async ({input})=>{
     const {callingId}=input;
     try{
-      const applicants=await ctx.prisma.jobApplication.findMany({
+      const applicants=await prisma.jobApplication.findMany({
         select:{
           id:true,
           Postulant:{

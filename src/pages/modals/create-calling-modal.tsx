@@ -57,6 +57,18 @@ export default function CreateCallingModal({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // Validación: la fecha de expiración debe ser al menos dos días mayor que la fecha de resultados
+    if (resultAt && expiresAt) {
+      const minimumExpirationDate = new Date(resultAt);
+      minimumExpirationDate.setDate(minimumExpirationDate.getDate() + 2);
+
+      if (expiresAt < minimumExpirationDate) {
+        alert(
+          'La fecha de expiración debe ser al menos dos días después de la fecha de resultados.',
+        );
+        return;
+      }
+    }
     const callingData = {
       requirement: requirement,
       min_exp_work: minExpWork!,
@@ -128,7 +140,7 @@ export default function CreateCallingModal({
 
           <div className="flex flex-col gap-2">
             <label className="text-black text-sm font-bold">
-              Fecha de Resultado:
+              Fecha de Resultados:
             </label>
             <ReactDatePicker
               selected={resultAt}
