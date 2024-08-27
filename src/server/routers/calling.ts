@@ -10,7 +10,7 @@ export const callingRouter = createTRPCRouter({
     return callings;
   }),
   findYourCallings: publicProcedure
-  .query(async ({ ctx }) => {
+  .query(async ({  }) => {
     const callings = await prisma.calling.findMany({
       select: {
         id:true,
@@ -19,9 +19,11 @@ export const callingRouter = createTRPCRouter({
         resultAt:true,
         expiresAt:true,
       },
+      /*
       where: {
         userId: ctx.session?.user?.id,
       },
+      */
     });
     return callings;
   }),
