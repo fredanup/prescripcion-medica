@@ -3,7 +3,7 @@ import { createApplicationSchema, editJobApplicationSchema } from "../../utils/a
 import { z } from "zod";
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { PDFDocument } from 'pdf-lib';
-import { prisma } from "server/prisma";
+import { prisma } from '../prisma';
 
 export const applicationRouter = createTRPCRouter({
   // Listar a los usuarios con su sucursal adjunta
