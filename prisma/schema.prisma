@@ -64,7 +64,7 @@ model JobApplication {
   status        String    @default("pending") //approved or rejected or pending
   resumeKey     String    @default("expediente") //expediente
   createdAt     DateTime  @default(now())
-  review        Boolean   @default(false) //Fue revisada la postulación?
+  review        String? //Fue revisada la postulación?
   interviewAt   DateTime?
   interviewLink String?
   Postulant     User      @relation(fields: [postulantId], references: [id])

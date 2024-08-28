@@ -1,8 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import ConfirmationModal from 'pages/modals/confirmation-modal';
-import RejectModal from 'pages/modals/reject-modal';
+import QuizModal from 'pages/modals/quiz-modal';
 import { useEffect, useState } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
@@ -12,9 +11,7 @@ import { trpc } from 'utils/trpc';
 export default function Calling() {
   const router = useRouter();
   const { id } = router.query; // Obtener el parámetro `id` de la ruta
-  const [isConfirmed, setIsConfirmed] = useState(false);
-
-  const [isReject, setIsReject] = useState(false);
+  const [isTest, setIsTest] = useState(false);
   const [applicationId, setApplicationId] = useState<string>('');
   // Asegúrate de que callingId esté definido antes de usarlo en la consulta
   const { data: callingApplicants } =
@@ -37,24 +34,13 @@ export default function Calling() {
     }
   }, [callingApplicants]); // Agregar `callingApplicants.data` como dependencia
 
-  const openConfirmationModal = (applicationId: string) => {
-    setIsConfirmed(true);
+  const openQuizModal = (applicationId: string) => {
+    setIsTest(true);
     setApplicationId(applicationId);
   };
 
-  const closeConfirmationModal = () => {
-    setIsConfirmed(false);
-    setApplicationId('');
-  };
-
-  const openRejectModal = (applicationId: string) => {
-    setIsReject(true);
-    setApplicationId(applicationId);
-  };
-
-  const closeRejectModal = () => {
-    setIsReject(false);
-    setApplicationId('');
+  const closeQuizModal = () => {
+    setIsTest(false);
   };
 
   return (
@@ -112,7 +98,7 @@ export default function Calling() {
             </div>
             <div className="flex flex-row gap-6 ml-auto">
               <svg
-                viewBox="0 0 640 512"
+                viewBox="0 0 384 512"
                 className={`${
                   applicant.interviewLink === null
                     ? 'h-6 w-6 cursor-pointer fill-cyan-500'
@@ -120,36 +106,19 @@ export default function Calling() {
                 }`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  openConfirmationModal(applicant.id);
+                  openQuizModal(applicant.id);
                 }}
               >
-                <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM625 177L497 305c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L591 143c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z" />
-              </svg>
-
-              <svg
-                viewBox="0 0 640 512"
-                className={`h-6 w-6 cursor-pointer fill-pink-500`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openRejectModal(applicant.id);
-                }}
-              >
-                <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM471 143c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" />
+                <path d="M192 0c-41.8 0-77.4 26.7-90.5 64L64 64C28.7 64 0 92.7 0 128L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64l-37.5 0C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM72 272a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zm104-16l128 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-128 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zM72 368a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zm88 0c0-8.8 7.2-16 16-16l128 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-128 0c-8.8 0-16-7.2-16-16z" />
               </svg>
             </div>
           </div>
         ))}
-        {isConfirmed && (
-          <ConfirmationModal
-            isOpen={isConfirmed}
-            onClose={closeConfirmationModal}
-            applicationId={applicationId}
-          />
-        )}
-        {isReject && (
-          <RejectModal
-            isOpen={isReject}
-            onClose={closeRejectModal}
+
+        {isTest && (
+          <QuizModal
+            isOpen={isTest}
+            onClose={closeQuizModal}
             applicationId={applicationId}
           />
         )}

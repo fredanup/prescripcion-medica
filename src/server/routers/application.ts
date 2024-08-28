@@ -135,6 +135,7 @@ export const applicationRouter = createTRPCRouter({
       console.log(error);
     }
   }),
+  
   acceptApplication:protectedProcedure.input(editJobApplicationSchema).mutation(async ({ctx,input})=>{
     
     try{
@@ -142,7 +143,8 @@ export const applicationRouter = createTRPCRouter({
         data: {
           status:"approved",
           interviewAt:input.interviewAt,
-          interviewLink:input.interviewLink
+          interviewLink:input.interviewLink,
+          review:"Usted cumple con todos los requisitos para pasar a la siguiente fase"
         },
         where: {
           id:input.id,
@@ -156,11 +158,36 @@ export const applicationRouter = createTRPCRouter({
     return { success: true };
   }),
   
-  rejectApplication:protectedProcedure.input(z.object({id:z.string()})).mutation(async ({ctx,input})=>{
+  rejectApplication:protectedProcedure.input(
+    z.object({
+    id: z.string(),
+    laboralExp: z.number(),
+    certEstudio: z.number(),
+    sucamec: z.number(),
+    licArmas: z.number(),
+    dni: z.number(),
+    cul: z.number(),
+    certFisPsi: z.number()
+  })).mutation(async ({ctx,input})=>{
     
     try{
+      // Crear un array para almacenar los nombres de los documentos no válidos
+      const invalidDocuments: string[] = [];
+    
+      // Verificar cada campo y agregar el nombre del documento si su valor es 0
+      if (input.laboralExp === 0) invalidDocuments.push("Experiencia laboral");
+      if (input.certEstudio === 0) invalidDocuments.push("Certificado de estudios");
+      if (input.sucamec === 0) invalidDocuments.push("SUCAMEC");
+      if (input.licArmas === 0) invalidDocuments.push("Licencia de armas");
+      if (input.dni === 0) invalidDocuments.push("DNI");
+      if (input.cul === 0) invalidDocuments.push("Certificado único laboral");
+      if (input.certFisPsi === 0) invalidDocuments.push("Certificado físico-psicológico");
+    
+      // Generar el mensaje basado en la validación
+      const message = `Usted no cumple con todos los requisitos para pasar a la siguiente fase. Documentos no válidos: ${invalidDocuments.join(", ")}`;
       await ctx.prisma.jobApplication.update({
         data: {
+          review: message,
           status:"rejected",
         },
         where: {

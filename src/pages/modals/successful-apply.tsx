@@ -33,10 +33,10 @@ export default function SuccessfulApply({
                 <div className="mt-4 pt-4 flex flex-row justify-end gap-2 border-t border-gray-200">
                   <button
                     type="button"
-                    className="rounded-lg border bg-gray-500 px-4 py-1 text-base font-medium text-white"
+                    className="rounded-lg border bg-sky-500 px-4 py-1 text-base font-medium text-white"
                     onClick={onClose}
                   >
-                    Cancelar
+                    Aceptar
                   </button>
                 </div>
               </div>

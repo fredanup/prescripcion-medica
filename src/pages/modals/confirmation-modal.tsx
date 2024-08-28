@@ -7,10 +7,12 @@ export default function ConfirmationModal({
   isOpen,
   onClose,
   applicationId,
+  onClose2,
 }: {
   isOpen: boolean;
   onClose: () => void;
   applicationId: string;
+  onClose2: () => void;
 }) {
   const acceptApplicant = trpc.application.acceptApplication.useMutation({
     onSettled: async () => {
@@ -22,7 +24,7 @@ export default function ConfirmationModal({
   const utils = trpc.useContext();
   //Estilizado del fondo detrás del modal. Evita al usuario salirse del modal antes de elegir alguna opción
   const overlayClassName = isOpen
-    ? 'fixed top-0 left-0 w-full h-full rounded-lg bg-gray-800 opacity-60 z-20'
+    ? 'fixed top-0 left-0 w-full h-full rounded-lg bg-gray-800 opacity-60 z-30'
     : 'hidden';
 
   if (!isOpen) {
@@ -38,6 +40,7 @@ export default function ConfirmationModal({
     if (applicationId) {
       acceptApplicant.mutate(applicationData);
       onClose();
+      onClose2();
     }
   };
   return (
@@ -47,10 +50,10 @@ export default function ConfirmationModal({
           {/* Fondo borroso y no interactivo */}
           <div className={overlayClassName}></div>
           <form
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform z-40 w-11/12 md:w-auto overflow-auto rounded-lg bg-white p-9"
+            className="fixed inset-0 z-30 flex items-center justify-center p-4 mb-4"
             onSubmit={handleSubmit}
           >
-            <div className="flex flex-col gap-2">
+            <div className="max-h-[calc(100%-5rem)] overflow-y-auto flex flex-col gap-2 rounded-lg bg-white p-6 drop-shadow-lg">
               <FormTitle text="Confirmar elección" />
               <p className="text-justify text-base font-light text-gray-500">
                 Complete los campos presentados a continuación:
