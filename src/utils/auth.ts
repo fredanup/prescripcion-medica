@@ -64,13 +64,14 @@ export const userBranchSchema = z.object({
     }),
     resumeKey: z.string(),
     interviewAt:z.date().nullable(),
-    interviewLink:z.string().nullable()
+    interviewLink:z.string().nullable(),
+    status:z.string()
   });
 
   export const editJobApplicationSchema = z.object({
     id:z.string(),
     interviewAt:z.date().nullable(),
-    interviewLink:z.string().nullable()
+    interviewLink:z.string().nullable()    
   });
 
   export type IUserBranch = z.infer<typeof userBranchSchema>;

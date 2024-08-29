@@ -34,12 +34,7 @@ export const applicationRouter = createTRPCRouter({
       by: ['callingId'], // Agrupa por el campo que referencia la convocatoria
       _count: {
         _all: true, // Cuenta todas las filas (postulaciones)
-      },
-      where: {
-        Calling: {
-          userId: ctx.session.user.id, // Filtra por el ID del usuario actual
-        }
-      },
+      }
     });    
     
     return applicantCounts;
@@ -89,7 +84,8 @@ export const applicationRouter = createTRPCRouter({
            interviewLink:true,
            resumeKey:true,
            status:true,
-           review:true
+           review:true,
+           finalScore:true
         },
         where:{
           status:{
@@ -120,7 +116,8 @@ export const applicationRouter = createTRPCRouter({
           },
           resumeKey:true,
           interviewAt:true,
-          interviewLink:true
+          interviewLink:true,
+          status:true
         },   
         where:{
           callingId:callingId,
@@ -157,7 +154,68 @@ export const applicationRouter = createTRPCRouter({
     }  
     return { success: true };
   }),
-  
+  finalTestApplicant: protectedProcedure
+  .input(
+    z.object({
+      id: z.string(),
+      quest1: z.number(),
+      quest2: z.number(),
+      quest3: z.number(),
+      quest4: z.number(),
+      quest5: z.number(),
+      quest6: z.number(),
+      quest7: z.number(),
+      quest8: z.number(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    try {
+      // Crear un array para almacenar los detalles de las preguntas
+      const questionDetails: string[] = [];
+
+      // Agregar el detalle correspondiente a cada pregunta con su puntuación
+      questionDetails.push(`Experiencia laboral: ${input.quest1}`);
+      questionDetails.push(`Alerta durante el turno: ${input.quest2}`);
+      questionDetails.push(`Atención a personas en peligro: ${input.quest3}`);
+      questionDetails.push(`Trabajo en equipo: ${input.quest4}`);
+      questionDetails.push(`Reacción en caso de robo o vandalismo: ${input.quest5}`);
+      questionDetails.push(`Expectativas salariales: ${input.quest6}`);
+      questionDetails.push(`Capacitación en TI: ${input.quest7}`);
+      questionDetails.push(`Reacción frente a una emergencia: ${input.quest8}`);
+
+      // Calcular el puntaje final
+      const result =
+        input.quest6 *
+        (input.quest1 +
+          input.quest2 +
+          input.quest3 +
+          input.quest4 +
+          input.quest5 +
+          input.quest7 +
+          input.quest8);
+
+      // Generar el mensaje basado en los detalles de las preguntas
+      const message = `Reporte detallado de la evaluación del postulante:\n\n${questionDetails.join(
+        "\n"
+      )}\n\nPuntaje total calculado: ${result}.`;
+
+      // Actualizar el registro en la base de datos con el mensaje descriptivo y el puntaje final
+      await ctx.prisma.jobApplication.update({
+        data: {
+          review2: message,          
+          finalScore: result,
+        },
+        where: {
+          id: input.id,
+        },
+      });
+
+      return { success: true };
+    } catch {
+      throw new Error("There was an error trying to update the record");
+    }
+  }),
+
   rejectApplication:protectedProcedure.input(
     z.object({
     id: z.string(),
@@ -189,6 +247,7 @@ export const applicationRouter = createTRPCRouter({
         data: {
           review: message,
           status:"rejected",
+          finalScore:0
         },
         where: {
           id:input.id

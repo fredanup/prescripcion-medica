@@ -34,7 +34,11 @@ export default function Results() {
                         : 'text-pink-500 text-base'
                     }`}
                   >
-                    {result.status === 'approved' ? 'Aprobado' : 'Rechazado'}
+                    {result.status === 'approved'
+                      ? result.finalScore === undefined
+                        ? 'Pasó a la siguiente etapa'
+                        : 'Resultado final'
+                      : 'No pasó a la siguiente etapa'}
                   </h3>
                 </div>
                 <div className="flex flex-row justify-between">
@@ -55,7 +59,7 @@ export default function Results() {
                         className="text-gray-500 text-sm flex flex-row gap-2 items-center"
                         href={result.interviewLink ?? ''}
                       >
-                        Sala de entrevista
+                        {result.interviewLink}
                         <svg
                           viewBox="0 0 512 512"
                           className="h-3 w-3 cursor-pointer fill-gray-500 "
@@ -68,10 +72,21 @@ export default function Results() {
                       Observaciones: {result.review ? result.review : 'Ninguna'}
                     </li>
 
-                    <li className="text-gray-500 text-sm">
-                      Fecha de entrevista :
-                      {result.interviewAt?.toLocaleDateString()}
-                    </li>
+                    {result.review === 'approved' && result.interviewAt && (
+                      <li>
+                        <span className="font-semibold">
+                          Fecha de entrevista:
+                        </span>{' '}
+                        {result.interviewAt.toLocaleDateString()}
+                      </li>
+                    )}
+
+                    {result.finalScore !== undefined && (
+                      <li>
+                        <span className="font-semibold">Puntaje final:</span>{' '}
+                        {result.finalScore}
+                      </li>
+                    )}
                   </ul>
                 </div>
               </div>

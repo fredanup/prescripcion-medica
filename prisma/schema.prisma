@@ -61,10 +61,12 @@ model Calling {
 
 model JobApplication {
   id            String    @id @default(cuid())
-  status        String    @default("pending") //approved or rejected or pending
+  status        String    @default("pending") //winner or approved or rejected or pending
   resumeKey     String    @default("expediente") //expediente
   createdAt     DateTime  @default(now())
-  review        String? //Fue revisada la postulación?
+  review        String? //Descripción de la revisión del expediente en la primera etapa
+  review2       String? //Descripción de la revisión del expediente en la segunda etapa
+  finalScore    Float?
   interviewAt   DateTime?
   interviewLink String?
   Postulant     User      @relation(fields: [postulantId], references: [id])
