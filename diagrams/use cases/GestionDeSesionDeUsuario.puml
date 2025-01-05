@@ -1,0 +1,23 @@
+@startuml
+
+actor paciente as "Paciente"
+
+actor medico as "Médico"
+actor farmaceutico as "Farmacéutico"
+
+
+rectangle GestionDeSesionDeUsuario {
+    usecase registrarUsuario as "Registrar usuario"
+    usecase iniciarSesion as "Iniciar sesión"
+    usecase cerrarSesion as "Cerrar sesión"
+}
+
+
+paciente <|- medico
+paciente <|- farmaceutico
+paciente-->registrarUsuario
+paciente-->iniciarSesion
+paciente-->cerrarSesion
+
+
+@enduml

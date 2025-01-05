@@ -1,0 +1,47 @@
+@startuml
+
+
+!define COMPONENT Component
+
+package "src" {
+
+    
+    folder "pages" {
+        folder "api"{
+            folder "auth"{
+                COMPONENT "[...nextauth].ts"
+            }
+            folder "trpc"{
+                COMPONENT "[trpc].ts"
+            }                
+        }
+        COMPONENT "_app.tsx"            
+        COMPONENT "index.tsx"
+        
+    }
+
+    folder "server" {
+        folder "routers" {
+            COMPONENT "_app.ts"
+        }
+        COMPONENT "context.ts"        
+        COMPONENT "prisma.ts"
+                       
+    }
+    folder "types" {
+        COMPONENT "next-auth.d.ts"
+    }   
+    folder "utils" {
+        COMPONENT "trpc.ts"
+    }
+}
+
+' Relaciones
+"[trpc].ts" --> "_app.ts" : Obtiene rutas
+"[trpc].ts" --> "context.ts" : Instancia contexto
+"[...nextauth].ts" --> "prisma.ts" : Instancia cliente prisma
+"_app.tsx" --> "next-auth.d.ts" : Instancia sesión de autenticación
+"_app.tsx" --> "trpc.ts" : Instancia cliente tRPC
+"_app.tsx" --> "index.tsx" : Configura autenticación global
+
+@enduml

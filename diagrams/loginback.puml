@@ -1,0 +1,31 @@
+@startuml
+actor Usuario
+participant "Servidor de Next.js" as Servidor
+participant "NextAuth.js" as NextAuth
+participant "Prisma ORM" as Prisma
+database "Base de Datos" as DB
+
+Usuario -> Servidor : Inicia sesión con Google (signIn)
+Servidor -> NextAuth : Solicita autenticación a través de Google
+NextAuth -> "API de Google" : Redirige al usuario para autenticación
+"API de Google" -> Usuario : Solicita credenciales de usuario
+Usuario -> "API de Google" : Ingresa credenciales
+"API de Google" -> NextAuth : Devuelve token de acceso y datos del usuario
+
+NextAuth -> Prisma : Verifica si el usuario ya existe en la base de datos
+Prisma -> DB : Consulta de usuario existente
+DB -> Prisma : Respuesta de consulta (usuario encontrado o no)
+
+alt Usuario nuevo
+    Prisma -> DB : Inserta datos del nuevo usuario
+    DB -> Prisma : Confirmación de inserción
+end
+
+NextAuth -> Prisma : Almacena o actualiza tokens (accessToken, refreshToken)
+Prisma -> DB : Guarda tokens
+DB -> Prisma : Confirmación de almacenamiento
+
+NextAuth -> Servidor : Devuelve datos de sesión y tokens al servidor
+Servidor -> Usuario : Redirige al usuario a la página protegida
+
+@enduml

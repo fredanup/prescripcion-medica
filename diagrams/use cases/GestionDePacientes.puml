@@ -1,0 +1,12 @@
+@startuml
+actor medico as "Médico"
+
+rectangle GestionDePacientes {
+    usecase visualizarPacientes as "Visualizar pacientes"
+    usecase registrarPaciente as "Registrar paciente"
+    usecase verHistorialDePaciente as "Ver historial de paciente"
+}
+medico-->visualizarPacientes
+medico-->registrarPaciente
+medico-->verHistorialDePaciente
+@enduml

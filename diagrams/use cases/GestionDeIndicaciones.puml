@@ -1,0 +1,12 @@
+@startuml
+actor medico as "Médico"
+
+rectangle GestionDeIndicaciones {
+    usecase prescribirIndicacion as "Prescribir indicación médica"
+    usecase modificarIndicacion as "Modificar indicación médica"
+    usecase eliminarIndicacion as "Eliminar indicación médica"
+}
+medico-->prescribirIndicacion
+medico-->modificarIndicacion
+medico-->eliminarIndicacion
+@enduml

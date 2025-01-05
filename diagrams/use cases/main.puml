@@ -1,0 +1,37 @@
+@startuml
+usecase registrarUsuario as "Registrar usuario"
+usecase iniciarSesion as "Iniciar sesión"
+usecase cerrarSesion as "Cerrar sesión"
+
+'Esto es del paciente
+usecase verHistorialClinico as "Ver historial clínico"
+
+
+usecase visualizarPacientes as "Visualizar pacientes"
+usecase registrarPaciente as "Registrar paciente"
+usecase verHistorialDePaciente as "Ver historial de paciente"
+
+usecase prescribirIndicacion as "Prescribir indicación médica"
+usecase modificarIndicacion as "Modificar indicación médica"
+usecase eliminarIndicacion as "Eliminar indicación médica"
+
+usecase prescribirReceta as "Prescribir receta médica"
+usecase modificarReceta as "Modificar receta médica"
+usecase eliminarReceta as "Eliminar receta médica"
+usecase visualizarRecetas as "Visualizar recetas médicas"
+usecase enviarReceta as "Enviar receta médica"
+
+usecase verRecetasRecibidas as "Ver recetas recibidas"
+usecase atenderReceta as "Atender receta"
+
+usecase registrarMedicamento as "Registrar medicamento"
+usecase modificarMedicamento as "Modificar medicamento"
+usecase eliminarMedicamento as "Eliminar medicamento"
+usecase visualizarMedicamentos as "Visualizar medicamentos"
+usecase registrarEjemplarDeMedicamento as "Registrar ejemplar de medicamento"
+usecase modificarEjemplarDeMedicamento as "Modificar ejemplar de medicamento"
+usecase eliminarEjemplarDeMedicamento as "Eliminar ejemplar de medicamento"
+usecase visualizarEjemplaresDeMedicamento as "Visualizar ejemplares de medicamento"
+
+
+@enduml

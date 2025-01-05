@@ -1,0 +1,26 @@
+@startuml
+actor Usuario
+boundary "Componente Home\n(Interfaz de Usuario)" as Home
+participant "useSession Hook\n(next-auth/react)" as SessionHook
+participant "useRouter Hook\n(Next.js)" as Router
+participant "NextAuth.js\n(signIn('google'))" as NextAuth
+
+Usuario -> Home : Carga la página de inicio
+Home -> SessionHook : Llama a useSession()
+SessionHook -> Home : Retorna datos de sesión y estado
+
+alt Usuario no autenticado (status = 'unauthenticated')
+    Home -> Usuario : Muestra la pantalla de inicio de sesión
+    Usuario -> Home : Hace clic en "Iniciar sesión"
+    Home -> NextAuth : Llama a signIn('google')
+    NextAuth -> Usuario : Redirige al servicio de autenticación de Google
+else Usuario autenticado (status = 'authenticated')
+    Home -> Router : Llama a router.replace('/dashboard/callings')
+    Router -> Home : Confirma redirección
+end
+
+alt status = 'loading'
+    Home -> Usuario : Muestra Spinner de carga
+end
+
+@enduml

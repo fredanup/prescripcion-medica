@@ -1,0 +1,16 @@
+@startuml
+actor medico as "Médico"
+
+rectangle GestionDeRecetas {
+    usecase prescribirReceta as "Prescribir receta médica"
+    usecase modificarReceta as "Modificar receta médica"
+    usecase eliminarReceta as "Eliminar receta médica"
+    usecase visualizarRecetas as "Visualizar recetas médicas"
+    usecase enviarReceta as "Enviar receta médica"
+}
+medico-->prescribirReceta
+medico-->modificarReceta
+medico-->eliminarReceta
+medico-->visualizarRecetas
+medico-->enviarReceta
+@enduml

@@ -1,0 +1,14 @@
+@startuml
+
+actor farmaceutico as "Farmaceútico"
+
+rectangle GestionDeMovimientos {
+
+    usecase verRecetasRecibidas as "Ver recetas recibidas"
+    usecase atenderReceta as "Atender receta"
+}
+
+farmaceutico --> verRecetasRecibidas
+farmaceutico --> atenderReceta
+
+@enduml

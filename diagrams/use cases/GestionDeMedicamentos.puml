@@ -1,0 +1,20 @@
+@startuml
+
+actor farmaceutico as "Farmaceútico"
+
+rectangle GestionDeMedicamentos {
+
+    usecase registrarMedicamento as "Registrar medicamento"
+    usecase modificarMedicamento as "Modificar medicamento"
+    usecase eliminarMedicamento as "Eliminar medicamento"
+    usecase visualizarMedicamentos as "Visualizar medicamentos"
+   
+}
+
+farmaceutico --> registrarMedicamento
+farmaceutico --> modificarMedicamento
+farmaceutico --> eliminarMedicamento
+farmaceutico --> visualizarMedicamentos
+
+
+@enduml

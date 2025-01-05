@@ -1,0 +1,19 @@
+@startuml
+
+actor farmaceutico as "Farmaceútico"
+
+rectangle GestionDeEjemplares {
+    usecase registrarEjemplarDeMedicamento as "Registrar ejemplar de medicamento"
+    usecase modificarEjemplarDeMedicamento as "Modificar ejemplar de medicamento"
+    usecase eliminarEjemplarDeMedicamento as "Eliminar ejemplar de medicamento"
+    usecase visualizarEjemplaresDeMedicamento as "Visualizar ejemplares de medicamento"
+}
+
+
+farmaceutico --> registrarEjemplarDeMedicamento
+farmaceutico --> modificarEjemplarDeMedicamento
+farmaceutico --> eliminarEjemplarDeMedicamento
+farmaceutico --> visualizarEjemplaresDeMedicamento
+
+
+@enduml
