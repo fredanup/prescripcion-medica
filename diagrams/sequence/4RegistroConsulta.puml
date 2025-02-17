@@ -1,0 +1,26 @@
+@startuml
+
+actor Medico
+boundary "Frontend" as Frontend
+boundary "Gestiona perfil" as ManageView
+control tRPC
+control "Prisma Adapter" as Prisma
+database Database
+entity "ConsultaMedica" as ConsultaMedica
+
+Medico -> Frontend: Acceder al sistema
+Frontend -> ManageView: Renderizar vista de médico
+ManageView -> Frontend: Mostrar vista de médico 
+Medico -> Frontend: Consultar historial de paciente
+Frontend -> ManageView: Mostrar historial de paciente
+
+Medico ->> Frontend: Crear consulta médica
+Frontend ->> tRPC: Crear consulta médica
+tRPC -> Prisma: Crear consulta médica
+Prisma -> Database: Insertar consulta médica
+Database --> Prisma: Retornar confirmación
+Prisma -> ConsultaMedica: Mapear confirmación
+ConsultaMedica -->> tRPC: Retornar confirmación
+tRPC -->> Frontend: Enviar confirmación
+
+@enduml

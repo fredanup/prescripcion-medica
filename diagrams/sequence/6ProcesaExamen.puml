@@ -1,0 +1,29 @@
+@startuml
+
+actor "Servicio de Diagnóstico" as Diagnostico
+actor Medico
+
+boundary "Frontend Diagnóstico" as Frontend
+
+control tRPC
+control "Prisma Adapter" as Prisma
+database Database
+entity "Orden Evaluación" as OrdenCtrl
+control "Sistema de Notificaciones" as Notif
+
+' --- Procesamiento de la orden ---
+Diagnostico -> Frontend: Ingresar resultados y observaciones
+Frontend ->> tRPC: Enviar datos de resultados
+tRPC -> Prisma: Enviar datos de resultados
+Prisma -> Database: Actualizar registro en DB
+Database --> Prisma: Confirmación de actualización
+Prisma -> OrdenCtrl: Mapear confirmación
+OrdenCtrl -> tRPC: Confirmación de registro
+tRPC -->> Frontend: Notificar actualización exitosa
+Frontend -> Diagnostico: Mostrar confirmación
+
+' --- Notificación al médico ---
+tRPC ->> Notif: Enviar notificación de orden atendida
+Notif -->> Medico: Notificar que la orden ha sido procesada
+
+@enduml

@@ -1,4 +1,4 @@
-@startuml
+@startuml GestionDeRecetasUseCaseDiagram
 actor medico as "Médico"
 
 rectangle GestionDeRecetas {

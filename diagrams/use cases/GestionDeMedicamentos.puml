@@ -1,4 +1,4 @@
-@startuml
+@startuml GestionDeMedicamentosUseCaseDiagram
 
 actor farmaceutico as "Farmaceútico"
 

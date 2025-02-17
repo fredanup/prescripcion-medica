@@ -1,0 +1,47 @@
+@startuml AlmacenClassDiagram
+
+class Medicamento {
+    nombre: String
+    presentacion: String    
+    fechaDeCreacion: Date
+    fechaDeActualizacion: Date
+
+}
+
+class Ejemplar {
+    id: String
+    fechaDeVencimiento: Date
+    fechaDeCreacion: Date
+    fechaDeActualizacion: Date
+    medicamento: Medicamento
+    cantidad: String
+    unidad: String
+    lote: String
+    precio: String
+    stock: String
+    estado: String
+}
+
+class Movimiento {
+    id: String
+    fecha: Date
+    tipo: String
+    cantidad: String   
+    fechaDeCreacion: Date
+    fechaDeActualizacion: Date
+    ejemplar: Ejemplar
+    farmaceutico: Farmaceutico
+}
+
+class Farmaceutico{
+
+}
+
+' Relaciones
+Ejemplar "1" -- "1..*" Movimiento : tiene
+Farmaceutico "1" -- "1..*" Movimiento : genera
+Medicamento "1" -- "1..*" Ejemplar : contiene
+
+
+
+@enduml
