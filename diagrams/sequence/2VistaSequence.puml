@@ -24,7 +24,7 @@ alt Rol Doctor
 else Rol Paciente
     Frontend -> PacienteDashboard: Renderizar Dashboard Paciente
 else Rol Farmacéutico
-    Frontend -> DiagnosticoDashboard: Renderizar Dashboard Farmacéutico
+    Frontend -> DiagnosticoDashboard: Renderizar Dashboard Diagnostico
 end
 
 @enduml

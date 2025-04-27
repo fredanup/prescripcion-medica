@@ -1,0 +1,90 @@
+
+{
+  "historialClinico": {
+    "crear":        { "method": "POST", "url": "/api/historial" },
+    "obtenerPorId": { "method": "GET",  "url": "/api/historial/{id}" },
+    "listar":       { "method": "GET",  "url": "/api/historial" }
+  },
+
+  "consultaMedica": {
+    "crear":         { "method": "POST", "url": "/api/consulta" },
+    "obtener":       { "method": "GET",  "url": "/api/consulta/{id}" },
+    "listarPorHC":   { "method": "GET",  "url": "/api/historial/{id}/consultas" },
+    "anular":        { "method": "PATCH", "url": "/api/consulta/{id}/anular" }
+  },
+
+  "ordenLaboratorio": {
+    "crear":         { "method": "POST", "url": "/api/orden-laboratorio" },
+    "obtener":       { "method": "GET",  "url": "/api/orden-laboratorio/{id}" },
+    "listarPorConsulta": { "method": "GET",  "url": "/api/consulta/{id}/ordenes-laboratorio" },
+    "anular":        { "method": "PATCH", "url": "/api/orden-laboratorio/{id}/anular" }
+  },
+
+  "resultadoLaboratorio": {
+    "registrar":     { "method": "POST", "url": "/api/resultados-laboratorio" },
+    "obtener":       { "method": "GET",  "url": "/api/resultados-laboratorio/{id}" },
+    "listarPorHC":   { "method": "GET",  "url": "/api/historial/{id}/resultados-laboratorio" },
+    "rectificar":    { "method": "POST", "url": "/api/resultados-laboratorio/{id}/rectificacion" }
+  },
+
+  "planAccionClinica": {
+    "crear":         { "method": "POST", "url": "/api/plan-accion" },
+    "obtener":       { "method": "GET",  "url": "/api/plan-accion/{id}" },
+    "listarPorConsulta": { "method": "GET", "url": "/api/consulta/{id}/planes-accion" },
+    "anular":        { "method": "PATCH", "url": "/api/plan-accion/{id}/anular" }
+  },
+
+  "evolucionClinica": {
+    "registrarEvento": { "method": "POST", "url": "/api/evolucion" },
+    "listarPorHistorial": { "method": "GET", "url": "/api/historial/{id}/evolucion" }
+  },
+
+  "altaMedica": {
+    "registrar":     { "method": "POST", "url": "/api/alta" },
+    "obtenerPorConsulta": { "method": "GET", "url": "/api/consulta/{id}/alta" }
+  },
+
+  "resumenClinico": {
+    "obtener":       { "method": "GET", "url": "/api/historial/{id}/resumen-clinico" },
+    "descargarPdf":  { "method": "GET", "url": "/api/historial/{id}/resumen-clinico/pdf" }
+  },
+
+  "firmaDigital": {
+    "firmarEvento":  { "method": "POST", "url": "/api/firma" },
+    "obtener":       { "method": "GET", "url": "/api/firma/{id}" }
+  },
+
+  "ordenMedicamentos": {
+    "crear":         { "method": "POST", "url": "/api/orden-medicamentos" },
+    "obtener":       { "method": "GET",  "url": "/api/orden-medicamentos/{id}" },
+    "listarPorHC":   { "method": "GET",  "url": "/api/historial/{id}/ordenes-medicamentos" },
+    "anular":        { "method": "PATCH", "url": "/api/orden-medicamentos/{id}/anular" }
+  },
+
+  "dispensacionFarmacia": {
+    "registrarEntrega": { "method": "POST", "url": "/api/dispensacion" },
+    "obtener":          { "method": "GET",  "url": "/api/dispensacion/{id}" }
+  },
+
+  "pacientePortal": {
+    "login":               { "method": "POST", "url": "/api/paciente/login" },
+    "logout":              { "method": "POST", "url": "/api/paciente/logout" },
+    "perfil":              { "method": "GET",  "url": "/api/paciente/perfil" },
+    "verHistorial":        { "method": "GET",  "url": "/api/paciente/historial" },
+    "verConsulta":         { "method": "GET",  "url": "/api/paciente/consulta/{id}" },
+    "verEvolucion":        { "method": "GET",  "url": "/api/paciente/evolucion" },
+    "verOrdenesLab":       { "method": "GET",  "url": "/api/paciente/ordenes-laboratorio" },
+    "verResultadosLab":    { "method": "GET",  "url": "/api/paciente/resultados-laboratorio/{id}" },
+    "verRecetas":          { "method": "GET",  "url": "/api/paciente/ordenes-medicamentos" },
+    "verEstadoEntrega":    { "method": "GET",  "url": "/api/paciente/ordenes-medicamentos/{id}" },
+    "confirmarRecepcion":  { "method": "POST", "url": "/api/paciente/ordenes-medicamentos/{id}/confirmar" },
+    "verAlta":             { "method": "GET",  "url": "/api/paciente/alta-medica/{idConsulta}" },
+    "descargarAlta":       { "method": "GET",  "url": "/api/paciente/alta-medica/{id}/pdf" },
+    "verResumenClinico":   { "method": "GET",  "url": "/api/paciente/resumen-clinico" },
+    "descargarResumenPdf": { "method": "GET",  "url": "/api/paciente/resumen-clinico/pdf" },
+    "verFirmasPendientes": { "method": "GET",  "url": "/api/paciente/firmas-pendientes" },
+    "firmarDocumento":     { "method": "POST", "url": "/api/paciente/firma/{id}" },
+    "verEncuestas":        { "method": "GET",  "url": "/api/paciente/encuestas" },
+    "responderEncuesta":   { "method": "POST", "url": "/api/paciente/encuestas/{id}" }
+  }
+}
