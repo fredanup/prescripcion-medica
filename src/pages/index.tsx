@@ -3,31 +3,29 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import Spinner from '../utilities/spinner';
+import { trpc } from 'utils/trpc';
 
 export default function Home() {
   //Obtenemos la sesión de la bd
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   //Inicialización de ruta
   const router = useRouter();
 
+  const { data: dashboardRoute, isLoading: isLoadingRoute } =
+    trpc.auth.getDashboardRoute.useQuery(undefined, {
+      enabled: status === 'authenticated', // solo consulta cuando esté autenticado
+    });
+
   //Redireccion al usuario a Main
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      // Aquí puedes mostrar un spinner o cualquier indicador de carga mientras se verifica el estado de autenticación
-      return;
+    if (dashboardRoute) {
+      router.replace(dashboardRoute);
     }
-    if (session) {
-      // Si el usuario está autenticado, redirigir a la página protegida
-      router.replace('/dashboard/callings').catch((error) => {
-        // Manejar cualquier error que pueda ocurrir al redirigir
-        console.error('Error al redirigir a la página principal:', error);
-      });
-    }
-  }, [status, session, router]);
+  }, [dashboardRoute, router]);
 
   // Renderizado durante la carga de sesión
-  if (status === 'loading') {
+  if (status === 'loading' || (status === 'authenticated' && isLoadingRoute)) {
     return <Spinner text={status} />;
   }
 

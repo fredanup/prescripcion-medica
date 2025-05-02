@@ -10,10 +10,11 @@ import { branchRouter } from './branch';
 import { documentRouter } from './document';
 import { callingRouter } from './calling';
 import { applicationRouter } from './application';
+import { authRouter } from './authRouter';
 
 export const appRouter = createTRPCRouter({
   healthcheck: publicProcedure.query(() => 'yay!'),
-
+  auth: authRouter,
   user: userRouter,
   branch: branchRouter,
   document: documentRouter,

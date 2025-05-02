@@ -112,7 +112,7 @@ export default function Callings() {
     IEditApplication[] | undefined
   >();
   useEffect(() => {
-    if (rol === 'applicant') {
+    if (rol === 'patient') {
       setCallings(availableCallings);
       setApplications(myApplications.data);
     } else {

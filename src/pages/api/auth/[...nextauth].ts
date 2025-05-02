@@ -28,6 +28,7 @@ if (useMockProvider) {
             id: name,
             name: name,
             email: name,
+            role: name,
           };
         }
         return null;
@@ -68,7 +69,7 @@ export default NextAuth({
   callbacks: {
     session: ({ session, user }) => ({
       ...session,
-      user: session.user ? { ...session.user, id: user.id } : session.user,
+      user: session.user ? { ...session.user, id: user.id, role: user.role } : session.user,
     }),
   },
 });

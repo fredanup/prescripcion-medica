@@ -82,8 +82,8 @@ model User {
   email           String           @unique
   emailVerified   DateTime?
   image           String?
-  //Role de usuario: applicant:Postulante, employer: Empleador
-  role            String           @default("applicant")
+  //Role de usuario: patient:Paciente
+  role            String           @default("patient")
   elegible        Boolean          @default(false)
   accounts        Account[]
   sessions        Session[]
