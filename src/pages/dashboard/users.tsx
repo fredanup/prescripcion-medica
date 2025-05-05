@@ -1,14 +1,14 @@
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
 import DeleteUserModal from 'pages/modals/delete-user-modal';
 import ErrorDeletingUser from 'pages/modals/error-deleting-user';
 import UpdateUserModal from 'pages/modals/update-user-modal';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
 import type { IUserBranch } from 'utils/auth';
+import { getRoleLabel } from 'utils/roleLabel';
 
 import { trpc } from 'utils/trpc';
 
@@ -52,22 +52,6 @@ export default function Users() {
     setDeleteIsOpen(false);
   };
 
-  //Inicialización de ruta
-  const router = useRouter();
-
-  //Redireccion al usuario a Main
-  useEffect(() => {
-    if (currentUser) {
-      if (currentUser.role === 'applicant') {
-        // Si el usuario está autenticado, redirigir a la página protegida
-        router.replace('/dashboard/callings').catch((error) => {
-          // Manejar cualquier error que pueda ocurrir al redirigir
-          console.error('Error al redirigir a la página principal:', error);
-        });
-      }
-    }
-  }, [currentUser, router]);
-
   if (!session?.user) return null;
 
   return (
@@ -105,9 +89,7 @@ export default function Users() {
                       <p className="font-light text-xs">{user.email}</p>
                     </div>
                   </td>
-                  <td className="py-4 pr-2">
-                    {user.role === 'employer' ? 'Empleador' : 'Postulante'}
-                  </td>
+                  <td className="py-4 pr-2">{getRoleLabel(user.role)}</td>
                   <td className="py-4 pr-2">{user.Branch?.name}</td>
                   <td className="py-4 text-sky-500 underline">
                     <button
