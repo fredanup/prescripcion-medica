@@ -14,6 +14,9 @@ dependencies:
   '@ducanh2912/next-pwa':
     specifier: ^9.7.2
     version: 9.7.2(next@14.2.5)(webpack@5.93.0)
+  '@heroicons/react':
+    specifier: ^2.2.0
+    version: 2.2.0(react@18.3.1)
   '@next-auth/prisma-adapter':
     specifier: ^1.0.7
     version: 1.0.7(@prisma/client@5.17.0)(next-auth@4.24.7)
@@ -59,6 +62,9 @@ dependencies:
   jspdf-autotable:
     specifier: ^3.8.2
     version: 3.8.2(jspdf@2.5.1)
+  lucide-react:
+    specifier: ^0.507.0
+    version: 0.507.0(react@18.3.1)
   next:
     specifier: ^14.2.5
     version: 14.2.5(@babel/core@7.24.9)(@playwright/test@1.45.2)(react-dom@18.3.1)(react@18.3.1)
@@ -2382,6 +2388,14 @@ packages:
     dependencies:
       '@hapi/hoek': 9.3.0
     dev: true
+
+  /@heroicons/react@2.2.0(react@18.3.1):
+    resolution: {integrity: sha512-LMcepvRaS9LYHJGsF0zzmgKCUim/X3N/DQKc4jepAXJ7l8QxJ1PmxJzqplF2Z3FE4PqBAIGyJAQ/w4B5dsqbtQ==}
+    peerDependencies:
+      react: '>= 16 || ^19.0.0-rc'
+    dependencies:
+      react: 18.3.1
+    dev: false
 
   /@humanwhocodes/config-array@0.11.14:
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -7344,6 +7358,14 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       yallist: 4.0.0
+    dev: false
+
+  /lucide-react@0.507.0(react@18.3.1):
+    resolution: {integrity: sha512-XfgE6gvAHwAtnbUvWiTTHx4S3VGR+cUJHEc0vrh9Ogu672I1Tue2+Cp/8JJqpytgcBHAB1FVI297W4XGNwc2dQ==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    dependencies:
+      react: 18.3.1
     dev: false
 
   /lz-string@1.5.0:

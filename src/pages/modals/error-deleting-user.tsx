@@ -29,7 +29,7 @@ export default function ErrorDeletingUser({
               <div className="w-full flex flex-col gap-2">
                 <h1 className="text-black text-base font-semibold">Error</h1>
                 <p className="text-sm font-light text-gray-500 text-justify">
-                  Usted no puede eliminarse a sí mismo
+                  No puede eliminarse a sí mismo
                 </p>
                 <div className="mt-4 pt-4 flex flex-row justify-end gap-2 border-t border-gray-200">
                   <button
