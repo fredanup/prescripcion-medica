@@ -8,7 +8,7 @@ export default function Layout({
   return (
     <>
       {/**Contenedo principal */}
-      <div className="m-0 box-border border-0 h-screen w-screen flex flex-col bg-[#F3F5F8] md:flex md:flex-row md:p-2">
+      <div className="m-0 box-border border-0 h-screen w-screen flex flex-col bg-[#DDD8D3] md:flex md:flex-row md:p-2">
         {/* Contenedor que agrupa NavBar + Panel derecho */}
         <div className="h-full w-full flex flex-col md:flex-row md:rounded-lg md:shadow-lg bg-white overflow-hidden">
           {/**Barra de menú */}
