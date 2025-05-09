@@ -28,7 +28,7 @@ export default function NavBar() {
 
   return (
     <nav
-      className={`fixed inset-x-0 bottom-0 z-10 p-1 border-t border-gray-200 flex flex-row bg-white justify-evenly items-center md:rounded-lg md:drop-shadow-lg md:justify-normal md:items-stretch md:static md:flex md:flex-col md:h-full md:border-0 md:gap-8 md:pt-8 md:px-4`}
+      className={`fixed inset-x-0 bottom-0 z-10 p-1 border-t border-gray-200 flex flex-row bg-[#F7F7F8] justify-evenly items-center md:justify-normal md:items-stretch md:static md:flex md:flex-col md:h-full md:gap-8 md:pt-8 md:px-4 md:rounded-tl-md md:rounded-bl-md md:border-r md:border-r-[#E4E8EB]`}
     >
       <div className="hidden md:w-full md:flex md:flex-row md:justify-center">
         <Image src="/logo.png" width={75} height={75} alt="Logo" />

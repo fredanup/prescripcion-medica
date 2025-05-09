@@ -91,9 +91,9 @@ export default function Users() {
                   </td>
                   <td className="py-4 pr-2">{getRoleLabel(user.role)}</td>
                   <td className="py-4 pr-2">{user.Branch?.name}</td>
-                  <td className="py-4 text-sky-500 underline">
+                  <td className="py-4">
                     <button
-                      className="underline mr-4"
+                      className="rounded-md border font-medium border-sky-500 text-sky-500 mr-4 py-2 px-4 hover:bg-sky-500 hover:text-white transition-colors"
                       onClick={(event) => {
                         event.stopPropagation();
                         openEditModal(user);
@@ -102,7 +102,7 @@ export default function Users() {
                       Editar
                     </button>
                     <button
-                      className="underline"
+                      className="rounded-md border font-medium border-pink-500 text-pink-500 mr-4 py-2 px-4 hover:bg-pink-500 hover:text-white transition-colors"
                       onClick={(event) => {
                         event.stopPropagation();
                         openDeleteModal(user);
