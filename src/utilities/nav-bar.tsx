@@ -1,7 +1,6 @@
 import Image from 'next/image';
 
 import { useSession } from 'next-auth/react';
-import { trpc } from 'utils/trpc';
 import Link from 'next/link';
 import SignOut from './signout-button';
 import { menuByRole } from 'utils/menuByRole';
@@ -15,15 +14,12 @@ export default function NavBar() {
    * Consultas a base de datos
    */
 
-  //Obtener el usuario actual
-  const { data: currentUser } = trpc.user.findOne.useQuery(
-    session?.user?.id ?? '',
-  );
-
   //Definición de los menús por rol
+  const activeRole = session?.user?.activeRole;
+
   const menu =
-    currentUser?.role && currentUser.role in menuByRole
-      ? menuByRole[currentUser.role as keyof typeof menuByRole] || []
+    activeRole && activeRole in menuByRole
+      ? menuByRole[activeRole as keyof typeof menuByRole]
       : [];
 
   return (

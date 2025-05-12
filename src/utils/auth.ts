@@ -1,3 +1,4 @@
+
 import * as z from 'zod';
 
 //Consulta utilizada para mostrar a los usuarios con sus sucursales
@@ -7,7 +8,11 @@ export const userBranchSchema = z.object({
     lastName: z.string().nullable(), 
     image: z.string().nullable(),
     email:z.string(),
-    role: z.string().nullable(), 
+    UserRole: z.object({
+      role: z.object({  
+        name: z.string()
+      })
+    }).array(),
     branchId:z.string().nullable(), 
     Branch: z.object({
       address:z.string().nullable()
@@ -18,7 +23,7 @@ export const userBranchSchema = z.object({
     id:z.string(),
     name: z.string().nullable(),
     lastName: z.string().nullable(),     
-    role: z.string().nullable(), 
+    roles: z.array(z.string()),
     branchId:z.string().nullable()
   });
 

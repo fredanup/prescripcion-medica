@@ -89,7 +89,12 @@ export default function Users() {
                       <p className="font-light text-xs">{user.email}</p>
                     </div>
                   </td>
-                  <td className="py-4 pr-2">{getRoleLabel(user.role)}</td>
+                  <td className="py-4 pr-2">
+                    {' '}
+                    {user.UserRole.map((ur) => getRoleLabel(ur.role.name)).join(
+                      ', ',
+                    )}
+                  </td>
                   <td className="py-4 pr-2">{user.Branch?.name}</td>
                   <td className="py-4">
                     <button

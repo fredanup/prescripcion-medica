@@ -8,10 +8,12 @@ declare module 'next-auth' {
     user?: {
       id: string;
       role: string;
+      activeRole: string;
+      doctorId?: string | null;
+      patientId?: string | null;
+      pharmacistId?: string | null;
+      labStaffId?: string | null;
     } & DefaultSession['user'];
   }
-  interface User {
-    id: string;
-    role: string;
-  }
+
 }

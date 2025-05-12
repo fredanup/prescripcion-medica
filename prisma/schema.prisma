@@ -76,14 +76,13 @@ model JobApplication {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  name            String?
-  lastName        String?
-  email           String           @unique
-  emailVerified   DateTime?
-  image           String?
-  //Role de usuario: patient:Paciente
-  role            String           @default("patient")
+  id            String    @id @default(cuid())
+  name          String?
+  lastName      String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+
   elegible        Boolean          @default(false)
   accounts        Account[]
   sessions        Session[]
@@ -96,6 +95,54 @@ model User {
   callings        Calling[]
   jobApplications JobApplication[]
   documents       Document[]
+
+  UserRole        UserRole[]
+  Patient         Patient?
+  Doctor          Doctor?
+  Pharmacist      Pharmacist?
+  LaboratoryStaff LaboratoryStaff?
+}
+
+model Role {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  users UserRole[]
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId String
+
+  @@unique([userId, roleId])
+}
+
+model Doctor {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Patient {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Pharmacist {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model LaboratoryStaff {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Account {

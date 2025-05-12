@@ -16,7 +16,8 @@ export default function UpdateUserModal({
 }) {
   const [name, setName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
-  const [role, setRole] = useState<string>('');
+  const [roles, setRoles] = useState<string[]>([]);
+
   const [branchId, setBranchId] = useState<string>('');
   const [isBranchOpen, setIsOpenBranch] = useState(false);
   const utils = trpc.useContext();
@@ -29,11 +30,17 @@ export default function UpdateUserModal({
     },
   });
 
+  const { data: allRoles } = trpc.role.findAll.useQuery(undefined, {
+    enabled: isOpen, // solo si el modal está abierto
+  });
+
   useEffect(() => {
     if (selectedUser !== null) {
       setName(selectedUser.name!);
       setLastName(selectedUser.lastName!);
-      setRole(selectedUser.role!);
+      const roleNames = selectedUser.UserRole?.map((ur) => ur.role.name) ?? [];
+      setRoles(roleNames);
+
       if (branchs) {
         const matchedOption = branchs.find(
           (branch) => branch.id === selectedUser.branchId,
@@ -58,10 +65,10 @@ export default function UpdateUserModal({
     event.preventDefault();
 
     const userData = {
-      name: name,
-      lastName: lastName,
-      role: role,
-      branchId: branchId,
+      name,
+      lastName,
+      roles, // 👈 ahora enviamos un arreglo de strings
+      branchId,
     };
 
     if (selectedUser !== null) {
@@ -70,10 +77,11 @@ export default function UpdateUserModal({
         ...userData,
       });
     }
+
     onClose();
     setName('');
     setLastName('');
-    setRole('');
+    setRoles([]); // 👈 importante: limpiar array
     setBranchId('');
   };
 
@@ -100,7 +108,7 @@ export default function UpdateUserModal({
 
           {/**CUERPO 1*/}
           <div className="flex flex-col gap-2">
-            <label className="text-black text-sm font-bold">Nombres:</label>
+            <label className="text-black text-sm font-bold">Nombres</label>
             <input
               type="text"
               className="focus:shadow-outline w-full appearance-none rounded-lg border px-2 py-1 leading-tight text-gray-700 focus:outline-none"
@@ -121,34 +129,29 @@ export default function UpdateUserModal({
             />
           </div>
 
-          {/**Radio button */}
-
-          <div>
-            <label className="text-black text-sm font-bold">Rol:</label>
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="employer"
-                value="employer"
-                checked={role === 'employer'}
-                onChange={(event) => setRole(event.target.value)}
-                className="mr-2"
-              />
-              <label htmlFor="employer" className="mr-4">
-                Empleador
-              </label>
-
-              <input
-                type="radio"
-                id="applicant"
-                value="applicant"
-                checked={role === 'applicant'}
-                onChange={(event) => setRole(event.target.value)}
-                className="mr-2"
-              />
-              <label htmlFor="applicant" className="mr-4">
-                Postulante
-              </label>
+          {/**Rol combo */}
+          <div className="flex flex-col gap-2">
+            <label className="text-black text-sm font-bold">Roles</label>
+            <div className="flex flex-col gap-1">
+              {allRoles?.map((role) => (
+                <label
+                  key={role.id}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={roles.includes(role.name)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setRoles((prev) => [...prev, role.name]);
+                      } else {
+                        setRoles((prev) => prev.filter((r) => r !== role.name));
+                      }
+                    }}
+                  />
+                  <span>{role.description || role.name}</span>
+                </label>
+              ))}
             </div>
           </div>
 

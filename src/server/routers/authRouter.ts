@@ -4,7 +4,7 @@ import { TRPCError } from '@trpc/server';
 
 export const authRouter = createTRPCRouter({
   getDashboardRoute: protectedProcedure.query(({ ctx }) => {
-    const role = ctx.session?.user?.role;
+    const role = ctx.session?.user?.activeRole;
 
     if (!role) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'No role found' });
 

@@ -67,9 +67,36 @@ export default NextAuth({
   providers,
   adapter: PrismaAdapter(prisma),
   callbacks: {
-    session: ({ session, user }) => ({
+  async session({ session, user }) {
+    const userWithRoles = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        UserRole: { include: { role: true } },
+        Doctor: true,
+        Patient: true,
+        Pharmacist: true,       // si tienes estas entidades clínicas
+        LaboratoryStaff: true,  // igual aquí
+      },
+    });
+
+    const roles = userWithRoles?.UserRole.map((ur) => ur.role.name) ?? [];
+
+    return {
       ...session,
-      user: session.user ? { ...session.user, id: user.id, role: user.role } : session.user,
-    }),
+      user: session.user
+        ? {
+            ...session.user,
+            id: user.id,
+            roles,
+            activeRole: roles[0], // puede cambiar luego desde frontend
+            doctorId: userWithRoles?.Doctor?.id ?? null,
+            patientId: userWithRoles?.Patient?.id ?? null,
+            pharmacistId: userWithRoles?.Pharmacist?.id ?? null,
+            labStaffId: userWithRoles?.LaboratoryStaff?.id ?? null,
+          }
+        : session.user,
+    };
   },
+}
+
 });
