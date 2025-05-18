@@ -21,6 +21,8 @@ export default function Users() {
   const [deleteIsOpen, setDeleteIsOpen] = useState(false);
   //Hook de estado que almacena el registro seleccionado
   const [selectedUser, setSelectedUser] = useState<IUserBranch | null>(null);
+  //Hook de estado que almacena el valor de búsqueda
+  const [search, setSearch] = useState('');
   /**
    * Consultas a base de datos
    */
@@ -52,12 +54,27 @@ export default function Users() {
     setDeleteIsOpen(false);
   };
 
+  const filteredUsers = users?.filter((user) => {
+    return user.name?.toLowerCase().includes(search.toLowerCase());
+  });
+
   if (!session?.user) return null;
 
   return (
     <>
       <Layout>
         <FormTitle text={'Gestión de usuarios '} />
+        <div className="my-4">
+          <input
+            type="text"
+            placeholder="Ingrese usuario a buscar..."
+            className="w-full bg-[#F7F7F8] border border-[#E4E8EB] text-sm text-gray-700 px-3 py-2 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 transition-shadow"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            required
+          />
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead className="border-b border-gray-200 text-left text-black text-sm font-light">
@@ -69,7 +86,7 @@ export default function Users() {
               </tr>
             </thead>
             <tbody>
-              {users?.map((user, index) => (
+              {filteredUsers?.map((user, index) => (
                 <tr
                   className="border-b border-gray-200 text-sm font-light"
                   key={index}

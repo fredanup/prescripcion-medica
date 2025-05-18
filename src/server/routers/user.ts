@@ -72,6 +72,34 @@ findUnique: protectedProcedure.query(async ({ ctx }) => {
     });
     return users;
   }),
+  //Listar a los usuarios con su sucursal adjunta
+  findPatients: protectedProcedure.query(async ({ctx}) => {
+    const users = await ctx.prisma.user.findMany({
+      where: {
+        UserRole: {
+          some: {
+            role: {
+              name: 'patient',
+            },
+          },
+        },
+      },
+      select:{
+        id:true,
+        name:true,
+        lastName:true,
+        image:true,
+        email:true,
+    
+        branchId:true,
+        Branch:true
+      },
+      orderBy:{
+        createdAt:'asc'
+      }
+    });
+    return users;
+  }),
 
 findOne: publicProcedure.input(z.string()).query(async ({ input }) => {
   const user = await prisma.user.findUnique({

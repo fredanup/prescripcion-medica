@@ -1,6 +1,5 @@
 import {
   User,
-  Shield,
   FileText,
   Settings,
   Calendar,
@@ -13,7 +12,7 @@ import {
 export const menuByRole = {
   admin: [
     { label: 'Usuarios', path: '/dashboard/users', icon: User },
-    { label: 'Roles', path: '/dashboard/roles', icon: Shield },
+
     { label: 'Auditoría', path: '/dashboard/audit', icon: FileText },
     { label: 'Reportes', path: '/dashboard/reports', icon: FileText },
     { label: 'Configuración', path: '/dashboard/settings', icon: Settings },
