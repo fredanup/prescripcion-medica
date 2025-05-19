@@ -125,12 +125,78 @@ model Doctor {
   id     String @id @default(cuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
+
+  Consultation Consultation[]
+
+  MedicalOrder MedicalOrder[]
 }
 
 model Patient {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  id              String            @id @default(cuid())
+  userId          String            @unique
+  user            User              @relation(fields: [userId], references: [id])
+  dateOfBirth     DateTime
+  createdAt       DateTime          @default(now())
+  clinicalHistory ClinicalHistory[]
+  consultations   Consultation[]
+  allergies       Allergy[]
+  medications     Medication[]
+  medicalOrder    MedicalOrder[]
+}
+
+model ClinicalHistory {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  date      DateTime @default(now())
+  summary   String // Cambio de `text` a algo más descriptivo
+}
+
+model Consultation {
+  id        String  @id @default(cuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+  doctorId  String
+  doctor    Doctor  @relation(fields: [doctorId], references: [id])
+
+  date      DateTime @default(now())
+  reason    String // Motivo de consulta
+  diagnosis String?
+  notes     String?
+}
+
+model Allergy {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  substance String // Sustancia que causa alergia
+  severity  String? // Ej: 'alta', 'moderada', 'leve'
+  notes     String?
+  date      DateTime @default(now())
+}
+
+model Medication {
+  id        String    @id @default(cuid())
+  patientId String
+  patient   Patient   @relation(fields: [patientId], references: [id])
+  name      String // Nombre del fármaco
+  dosage    String? // Ej: 500mg
+  frequency String? // Ej: 1 cada 8 horas
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  notes     String?
+}
+
+model MedicalOrder {
+  id          String   @id @default(cuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  doctorId    String
+  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+  type        String // Ej: 'laboratorio', 'imagen', 'fisioterapia'
+  description String
+  status      String // 'pendiente', 'realizada', 'cancelada'
+  date        DateTime @default(now())
 }
 
 model Pharmacist {
