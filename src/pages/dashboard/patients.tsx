@@ -1,5 +1,6 @@
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import { useState } from 'react';
 
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
@@ -14,8 +15,15 @@ export default function Patients() {
    * Consultas a base de datos
    */
   //Obtener todos los usuarios creados con su sucursal
-  const { data: users } = trpc.user.findPatients.useQuery(undefined, {
+  const { data: patients } = trpc.user.findPatients.useQuery(undefined, {
     enabled: status === 'authenticated',
+  });
+
+  //Hook de estado que almacena el valor de búsqueda
+  const [search, setSearch] = useState('');
+
+  const filteredPatients = patients?.filter((user) => {
+    return user.name?.toLowerCase().includes(search.toLowerCase());
   });
 
   if (!session?.user) return null;
@@ -24,6 +32,17 @@ export default function Patients() {
     <>
       <Layout>
         <FormTitle text={'Pacientes'} />
+        <div className="my-4">
+          <input
+            type="text"
+            placeholder="Ingrese paciente a buscar..."
+            className="w-full bg-[#F7F7F8] border border-[#E4E8EB] text-sm text-gray-700 px-3 py-2 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 transition-shadow"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            required
+          />
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead className="border-b border-gray-200 text-left text-black text-sm font-light">
@@ -35,7 +54,7 @@ export default function Patients() {
               </tr>
             </thead>
             <tbody>
-              {users?.map((user, index) => (
+              {filteredPatients?.map((user, index) => (
                 <tr
                   className="border-b border-gray-200 text-sm font-light"
                   key={index}
@@ -64,15 +83,7 @@ export default function Patients() {
                         event.stopPropagation();
                       }}
                     >
-                      Editar
-                    </button>
-                    <button
-                      className="rounded-md border font-medium border-pink-500 text-pink-500 mr-4 py-2 px-4 hover:bg-pink-500 hover:text-white transition-colors"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                      }}
-                    >
-                      Eliminar
+                      Ver
                     </button>
                   </td>
                 </tr>

@@ -191,7 +191,64 @@ updateUser: protectedProcedure
             roleId: role.id,
           })),
         });
+
+        // 4. Crear entidades clínicas si no existen
+        for (const roleName of roles) {
+          if (roleName === 'doctor') {
+            const existingDoctor = await ctx.prisma.doctor.findUnique({
+              where: { userId: id },
+            });
+            if (!existingDoctor) {
+              await ctx.prisma.doctor.create({
+                data: {
+                  userId: id,
+                  
+                },
+              });
+            }
+          }
+
+          if (roleName === 'patient') {
+            const existingPatient = await ctx.prisma.patient.findUnique({
+              where: { userId: id },
+            });
+            if (!existingPatient) {
+              await ctx.prisma.patient.create({
+                data: {
+                  userId: id,
+                },
+              });
+            }
+          }
+
+          if (roleName === 'pharmacist') {
+            const existingPharmacist = await ctx.prisma.pharmacist.findUnique({
+              where: { userId: id },
+            });
+            if (!existingPharmacist) {
+              await ctx.prisma.pharmacist.create({
+                data: {
+                  userId: id,
+                },
+              });
+            }
+          }
+
+          if (roleName === 'laboratory_staff') {
+            const existingLabStaff = await ctx.prisma.laboratoryStaff.findUnique({
+              where: { userId: id },
+            });
+            if (!existingLabStaff) {
+              await ctx.prisma.laboratoryStaff.create({
+                data: {
+                  userId: id,
+                },
+              });
+            }
+          }
+        }
       }
+
     } catch (error) {
       console.error('[updateUser error]', error);
       throw new Error('Error al actualizar el usuario.');
