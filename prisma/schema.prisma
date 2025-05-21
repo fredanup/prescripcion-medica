@@ -135,13 +135,13 @@ model Patient {
   id              String            @id @default(cuid())
   userId          String            @unique
   user            User              @relation(fields: [userId], references: [id])
-  dateOfBirth     DateTime
+  dateOfBirth     DateTime?
   createdAt       DateTime          @default(now())
   clinicalHistory ClinicalHistory[]
   consultations   Consultation[]
   allergies       Allergy[]
   medications     Medication[]
-  medicalOrder    MedicalOrder[]
+  medicalOrders   MedicalOrder[]
 }
 
 model ClinicalHistory {
@@ -159,10 +159,36 @@ model Consultation {
   doctorId  String
   doctor    Doctor  @relation(fields: [doctorId], references: [id])
 
-  date      DateTime @default(now())
-  reason    String // Motivo de consulta
-  diagnosis String?
-  notes     String?
+  date          DateTime                 @default(now())
+  reason        String // Motivo de consulta
+  diagnosis     String?
+  notes         String?
+  indications   MedicalIndication[]
+  prescriptions MedicationPrescription[]
+
+  medicalOrders MedicalOrder[]
+}
+
+model MedicalIndication {
+  id             String       @id @default(cuid())
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  instruction    String // Ej: "Reposo absoluto por 3 días"
+  notes          String?
+}
+
+model MedicationPrescription {
+  id             String       @id @default(cuid())
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+
+  name        String // Paracetamol
+  dosage      String // 500mg
+  frequency   String // cada 8h
+  duration    String // 5 días
+  notes       String?
+  dispensed   Boolean   @default(false)
+  dispensedAt DateTime?
 }
 
 model Allergy {
@@ -188,15 +214,22 @@ model Medication {
 }
 
 model MedicalOrder {
-  id          String   @id @default(cuid())
-  patientId   String
-  patient     Patient  @relation(fields: [patientId], references: [id])
-  doctorId    String
-  doctor      Doctor   @relation(fields: [doctorId], references: [id])
-  type        String // Ej: 'laboratorio', 'imagen', 'fisioterapia'
+  id             String        @id @default(cuid())
+  patientId      String
+  patient        Patient       @relation(fields: [patientId], references: [id])
+  doctorId       String
+  doctor         Doctor        @relation(fields: [doctorId], references: [id])
+  consultationId String?
+  consultation   Consultation? @relation(fields: [consultationId], references: [id])
+
+  area        String // Ej: "laboratorio", "farmacia", "imagen"
   description String
   status      String // 'pendiente', 'realizada', 'cancelada'
-  date        DateTime @default(now())
+  date        DateTime  @default(now())
+  results     String? // (opcional) resultado textual
+  resultFile  String? // (opcional) URL a PDF/imágenes
+  dispensedAt DateTime? // (si aplica a farmacia)
+  createdAt   DateTime  @default(now())
 }
 
 model Pharmacist {

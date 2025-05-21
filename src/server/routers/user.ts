@@ -216,6 +216,8 @@ updateUser: protectedProcedure
               await ctx.prisma.patient.create({
                 data: {
                   userId: id,
+                                    
+
                 },
               });
             }
