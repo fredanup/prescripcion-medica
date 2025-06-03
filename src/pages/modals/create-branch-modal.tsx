@@ -2,21 +2,28 @@ import FormTitle from 'utilities/form-title';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { trpc } from 'utils/trpc';
+import { IBranch } from 'utils/auth';
 
 export default function CreateBranchModal({
   isOpen,
   onClose,
+  onCreate,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  onCreate: (branch: IBranch) => void;
 }) {
   const [name, setName] = useState<string>('');
   const [address, setAddress] = useState<string>('');
 
   const utils = trpc.useContext();
   const createBranch = trpc.branch.createBranch.useMutation({
-    onSettled: async () => {
+    onSuccess: async (newBranch) => {
       await utils.branch.findMany.invalidate();
+      onCreate(newBranch);
+      onClose();
+      setName('');
+      setAddress('');
     },
   });
 
@@ -28,10 +35,6 @@ export default function CreateBranchModal({
     };
 
     createBranch.mutate(branchData);
-
-    onClose();
-    setName('');
-    setAddress('');
   };
   if (!isOpen) {
     return null; // No renderizar el modal si no está abierto

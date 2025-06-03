@@ -16,14 +16,16 @@ export const branchRouter = createTRPCRouter({
   .mutation(async ({ ctx, input }) => {
     try {
       const { name, address } = input;
-      await ctx.prisma.branch.create({          
+      const newBranch=await ctx.prisma.branch.create({          
         data: {                
             name: name,        
             address: address             
         },
       });
+      return newBranch;
     } catch (error) {
       console.log(error);
+       throw new Error('Error al crear la sucursal'); 
     }
   }),
 });

@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
-import type { IUserBranch } from 'utils/auth';
+import type { IBranch, IUserBranch } from 'utils/auth';
 import { trpc } from 'utils/trpc';
 import CreateBranchModal from './create-branch-modal';
 import FormTitle from 'utilities/form-title';
@@ -19,38 +19,44 @@ export default function UpdateUserModal({
   const [roles, setRoles] = useState<string[]>([]);
 
   const [branchId, setBranchId] = useState<string>('');
+  const [branchList, setBranchList] = useState<IBranch[]>([]);
+
   const [isBranchOpen, setIsOpenBranch] = useState(false);
   const utils = trpc.useContext();
   //Mutación para la base de datos
   //Obtener todos los usuarios creados con su sucursal
-  const { data: branchs } = trpc.branch.findMany.useQuery();
+  const { data: branchs } = trpc.branch.findMany.useQuery(undefined, {
+    enabled: isOpen, // ⚠️ Esto asegura que se ejecute solo si el modal está abierto
+  });
+  const { data: allRoles } = trpc.role.findAll.useQuery(undefined, {
+    enabled: isOpen, // solo si el modal está abierto
+  });
+
   const updateUser = trpc.user.updateUser.useMutation({
     onSettled: async () => {
       await utils.user.findManyUserBranch.invalidate();
     },
   });
 
-  const { data: allRoles } = trpc.role.findAll.useQuery(undefined, {
-    enabled: isOpen, // solo si el modal está abierto
-  });
+  useEffect(() => {
+    if (branchs) setBranchList(branchs);
+  }, [branchs]);
 
   useEffect(() => {
-    if (selectedUser !== null) {
+    if (selectedUser) {
       setName(selectedUser.name!);
       setLastName(selectedUser.lastName!);
       const roleNames = selectedUser.UserRole?.map((ur) => ur.role.name) ?? [];
       setRoles(roleNames);
 
-      if (branchs) {
-        const matchedOption = branchs.find(
-          (branch) => branch.id === selectedUser.branchId,
-        );
-        if (matchedOption) {
-          setBranchId(selectedUser.branchId!);
-        }
-      }
+      if (selectedUser.branchId) setBranchId(selectedUser.branchId);
     }
-  }, [branchs, selectedUser]);
+  }, [selectedUser]);
+
+  const handleBranchCreated = (branch: IBranch) => {
+    setBranchId(branch.id);
+    setBranchList((prev) => [...prev, branch]);
+  };
 
   //Función de selección de registro y apertura de modal de edición
   const openBranchModal = () => {
@@ -83,7 +89,11 @@ export default function UpdateUserModal({
     setLastName('');
     setRoles([]); // 👈 importante: limpiar array
     setBranchId('');
+    setBranchList([]);
   };
+
+  const isBranchValid =
+    branchId !== '' && branchList.some((b) => b.id === branchId);
 
   if (!isOpen) {
     return null; // No renderizar el modal si no está abierto
@@ -92,6 +102,7 @@ export default function UpdateUserModal({
   const overlayClassName = isOpen
     ? 'fixed top-0 left-0 w-full h-full rounded-lg bg-gray-800 opacity-60 z-20'
     : 'hidden';
+
   return (
     <>
       {/* Fondo borroso y no interactivo */}
@@ -181,7 +192,7 @@ export default function UpdateUserModal({
                     <option value="">Seleccionar</option>
                   </>
                 )}
-                {branchs?.map((branch) => (
+                {branchList?.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.name}
                   </option>
@@ -200,7 +211,10 @@ export default function UpdateUserModal({
             </button>
             <button
               type="submit"
-              className="rounded-lg border bg-sky-500 px-4 py-1 text-base font-medium text-white"
+              disabled={!isBranchValid}
+              className={`px-4 py-1 rounded text-white ${
+                isBranchValid ? 'bg-sky-500' : 'bg-gray-300 cursor-not-allowed'
+              }`}
             >
               Guardar
             </button>
@@ -208,7 +222,11 @@ export default function UpdateUserModal({
         </div>
       </form>
       {isBranchOpen && (
-        <CreateBranchModal isOpen={isBranchOpen} onClose={closeBranchModal} />
+        <CreateBranchModal
+          isOpen={isBranchOpen}
+          onClose={closeBranchModal}
+          onCreate={handleBranchCreated}
+        />
       )}
     </>
   );
