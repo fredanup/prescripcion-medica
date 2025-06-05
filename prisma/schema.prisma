@@ -129,6 +129,30 @@ model Doctor {
   Consultation Consultation[]
 
   MedicalOrder MedicalOrder[]
+
+  DoctorPatient DoctorPatient[]
+
+  Specialty Specialty[]
+
+  Schedule Schedule[]
+
+  Appointment Appointment[]
+}
+
+model Specialty {
+  id      String   @id @default(cuid())
+  name    String
+  doctors Doctor[] // Médicos con esta especialidad
+}
+
+model Schedule {
+  id        String   @id @default(cuid())
+  doctorId  String
+  dayOfWeek Int // 0: domingo, 1: lunes, etc.
+  startTime DateTime
+  endTime   DateTime
+
+  doctor Doctor @relation(fields: [doctorId], references: [id])
 }
 
 model Patient {
@@ -142,6 +166,42 @@ model Patient {
   allergies       Allergy[]
   medications     Medication[]
   medicalOrders   MedicalOrder[]
+
+  DoctorPatient DoctorPatient[]
+
+  Appointment Appointment[]
+}
+
+model DoctorPatient {
+  id         String   @id @default(cuid())
+  doctorId   String
+  patientId  String
+  assignedAt DateTime @default(now())
+
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@unique([doctorId, patientId]) // evita duplicados
+}
+
+enum AppointmentStatus {
+  pending_payment
+  confirmed
+  cancelled
+  completed
+}
+
+model Appointment {
+  id        String            @id @default(cuid())
+  patientId String
+  doctorId  String
+  date      DateTime
+  status    AppointmentStatus @default(pending_payment)
+  createdAt DateTime          @default(now())
+  paidAt    DateTime?
+
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
 }
 
 model ClinicalHistory {
