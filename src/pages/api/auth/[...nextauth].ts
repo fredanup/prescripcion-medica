@@ -97,6 +97,36 @@ export default NextAuth({
         : session.user,
     };
   },
-}
+},
+  events: {
+    async createUser({ user }) {
+      // Verifica que no exista ya el Patient por si acaso
+      const exists = await prisma.patient.findUnique({
+        where: { userId: user.id },
+      });
 
+      if (!exists) {
+        await prisma.patient.create({
+          data: {
+            userId: user.id,
+            
+          },
+        });
+      }
+
+      // Asignar el rol "patient" automáticamente
+      const patientRole = await prisma.role.findUnique({
+        where: { name: 'patient' },
+      });
+
+      if (patientRole) {
+        await prisma.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: patientRole.id,
+          },
+        });
+      }
+    },
+  },
 });
