@@ -83,15 +83,25 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  elegible        Boolean          @default(false)
-  accounts        Account[]
-  sessions        Session[]
-  // Optional for WebAuthn support
-  Authenticator   Authenticator[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  Branch          Branch?          @relation(fields: [branchId], references: [id])
-  branchId        String?
+  phone          String?
+  gender         String?
+  birthDate      DateTime?
+  address        String?
+  maritalStatus  String?
+  documentNumber String? // DNI
+  documentType   String? // Ej. "DNI", "Pasaporte"
+
+  elegible  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  Authenticator Authenticator[]
+
+  branchId String?
+  Branch   Branch? @relation(fields: [branchId], references: [id])
+
   callings        Calling[]
   jobApplications JobApplication[]
   documents       Document[]
