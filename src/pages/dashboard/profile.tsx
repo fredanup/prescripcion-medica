@@ -1,10 +1,7 @@
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import Link from 'next/link';
-import CreateDocumentModal from 'pages/modals/create-document-modal';
-import UnvalidDocument from 'pages/modals/unvalid-document';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
 import Spinner from 'utilities/spinner';
@@ -16,20 +13,13 @@ export default function Profile() {
    */
   //Hook de estado que controla la apertura del modal de creación de documentos
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [isUnavailableDoc, setIsUnavailableDoc] = useState(false);
-  const [userId, setUserId] = useState('');
   //Obtener el usuario actual
   const { data: session, status } = useSession();
-
-  const [docType, setDoctype] = useState('');
 
   //Redireccion al usuario a Main
   useEffect(() => {
     if (session) {
-      if (status === 'authenticated') {
-        setUserId(session.user!.id);
-      } else {
+      if (!(status === 'authenticated')) {
         <Spinner text={status} />;
       }
     } else {
@@ -39,49 +29,10 @@ export default function Profile() {
   /**
    * Consultas a base de datos
    */
-  //Obtener los registros de bd
-  const { data } = trpc.document.getUserDocuments.useQuery(
-    { userId }, // Pasa userId directamente como parte del objeto de entrada
-    {
-      enabled: !!userId, // La consulta se habilita solo si userId tiene un valor truthy
-    },
-  );
+
   const { data: currentUser } = trpc.user.findCurrentOne.useQuery(undefined, {
     enabled: status === 'authenticated',
   });
-
-  /**
-   * Funciones de apertura y cierre de modales
-   */
-  //Función de apertura del modal DocumentModal
-  const openModal = (opt: string) => {
-    setIsOpen(true);
-    setDoctype(opt);
-  };
-  //Función de cierre del modal DocumentModal
-  const closeModal = () => {
-    setIsOpen(false);
-    setDoctype('');
-  };
-
-  const openUnavailableDocModal = () => {
-    setIsUnavailableDoc(true);
-  };
-  //Función de cierre del modal DocumentModal
-  const closeUnavailableDocModalModal = () => {
-    setIsUnavailableDoc(false);
-  };
-
-  const urlDoc = (doc: string, userId: string) => {
-    const founded = data?.find((record) => record.key === doc);
-    if (founded !== undefined) {
-      // Reemplaza todos los espacios por + en la key
-      const formattedKey = founded.key?.replace(/ /g, '+');
-      return `https://pacificsecurity.s3.amazonaws.com/documents/${userId}/${formattedKey}`;
-    } else {
-      return null;
-    }
-  };
 
   return (
     <>
@@ -119,26 +70,24 @@ export default function Profile() {
                 Apellidos
               </p>
               <p className="text-sm font-medium text-black ">
-                {currentUser?.name}
+                {currentUser?.lastName}
               </p>
             </div>
-            <div>
-              <p className="text-sm font-normal text-gray-500 mb-1">Género</p>
-              <p className="text-sm font-medium text-black ">Masculino</p>
-            </div>
+
             <div>
               <p className="text-sm font-normal text-gray-500 mb-1">
                 Fecha de nacimiento
               </p>
-              <p className="text-sm font-medium text-black ">30/06/1996</p>
+              <p className="text-sm font-medium text-black ">
+                {currentUser?.birthDate?.toLocaleDateString()}
+              </p>
             </div>
-            <div>
-              <p className="text-sm font-normal text-gray-500 mb-1">Edad</p>
-              <p className="text-sm font-medium text-black ">32</p>
-            </div>
+
             <div>
               <p className="text-sm font-normal text-gray-500 mb-1">Teléfono</p>
-              <p className="text-sm font-medium text-black ">986814715</p>
+              <p className="text-sm font-medium text-black ">
+                {currentUser?.phone}
+              </p>
             </div>
             <div>
               <p className="text-sm font-normal text-gray-500 mb-1">Correo</p>
@@ -151,36 +100,26 @@ export default function Profile() {
                 Dirección
               </p>
               <p className="text-sm font-medium text-black ">
-                Urb. Santa Rosa, Calle 1 Mz. 2 Lote 3
+                {currentUser?.address}
               </p>
             </div>
-            <div>
-              <p className="text-sm font-normal text-gray-500 mb-1">
-                Tipo de sangre
-              </p>
-              <p className="text-sm font-medium text-black ">O+</p>
-            </div>
+
             <div>
               <p className="text-sm font-normal text-gray-500 mb-1">
                 Estatus marital
               </p>
-              <p className="text-sm font-medium text-black ">Soltero</p>
+              <p className="text-sm font-medium text-black ">
+                {currentUser?.maritalStatus}
+              </p>
             </div>
             <div>
               <p className="text-sm font-normal text-gray-500 mb-1">DNI</p>
-              <p className="text-sm font-medium text-black ">73089093</p>
+              <p className="text-sm font-medium text-black ">
+                {currentUser?.documentNumber}
+              </p>
             </div>
           </div>
         </div>
-        <CreateDocumentModal
-          isOpen={isOpen}
-          onClose={closeModal}
-          opt={docType}
-        />
-        <UnvalidDocument
-          isOpen={isUnavailableDoc}
-          onClose={closeUnavailableDocModalModal}
-        />
       </Layout>
     </>
   );

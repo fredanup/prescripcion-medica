@@ -73,7 +73,7 @@ export default function Callings() {
         console.error('Error al redirigir a la página principal:', error);
       });
     } else if (status === 'authenticated') {
-      setRole(currentUser?.role);
+      setRole(currentUser?.UserRole?.role);
     }
   }, [currentUser, router, status]);
 

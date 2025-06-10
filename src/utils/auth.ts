@@ -79,11 +79,19 @@ export const userBranchSchema = z.object({
     interviewLink:z.string().nullable()    
   });
 
+  export const editAppointmentSchema = z.object({
+    id:z.string(),
+    specialtyId :z.string(),
+    doctorId  :z.string(),
+    date :z.date()
+  });
+
   export type IUserBranch = z.infer<typeof userBranchSchema>;
   export type IEditUserBranch = z.infer<typeof editUserBranchSchema>;
   export type IBranch = z.infer<typeof branchSchema>;
   export type ICreateCalling = z.infer<typeof createCallingSchema>;
   export type IEditCalling = z.infer<typeof editCallingSchema>;
+  export type IEditAppointment = z.infer<typeof editAppointmentSchema>;
   export type IEditApplication = z.infer<typeof editApplicationSchema>;
   export type IJobApplication=z.infer<typeof jobApplicationSchema>;
   export type IEditJobApplication=z.infer<typeof editJobApplicationSchema>;

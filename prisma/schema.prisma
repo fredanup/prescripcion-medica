@@ -150,9 +150,10 @@ model Doctor {
 }
 
 model Specialty {
-  id      String   @id @default(cuid())
-  name    String
-  doctors Doctor[] // Médicos con esta especialidad
+  id          String        @id @default(cuid())
+  name        String
+  doctors     Doctor[] // Médicos con esta especialidad
+  Appointment Appointment[]
 }
 
 model Schedule {
@@ -169,7 +170,7 @@ model Patient {
   id              String            @id @default(cuid())
   userId          String            @unique
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dateOfBirth     DateTime?
+  bloodType       String? // Tipo de sangre (O+, A-, etc.)
   createdAt       DateTime          @default(now())
   clinicalHistory ClinicalHistory[]
   consultations   Consultation[]
@@ -202,16 +203,18 @@ enum AppointmentStatus {
 }
 
 model Appointment {
-  id        String            @id @default(cuid())
-  patientId String
-  doctorId  String
-  date      DateTime
-  status    AppointmentStatus @default(pending_payment)
-  createdAt DateTime          @default(now())
-  paidAt    DateTime?
+  id          String            @id @default(cuid())
+  patientId   String
+  doctorId    String
+  specialtyId String
+  date        DateTime
+  status      AppointmentStatus @default(pending_payment)
+  createdAt   DateTime          @default(now())
+  paidAt      DateTime?
 
-  doctor  Doctor  @relation(fields: [doctorId], references: [id])
-  patient Patient @relation(fields: [patientId], references: [id])
+  doctor    Doctor    @relation(fields: [doctorId], references: [id])
+  patient   Patient   @relation(fields: [patientId], references: [id])
+  specialty Specialty @relation(fields: [specialtyId], references: [id])
 }
 
 model ClinicalHistory {

@@ -120,7 +120,15 @@ findOne: publicProcedure.input(z.string()).query(async ({ input }) => {
     if (!ctx.session?.user?.id) {
       throw new Error('Not authenticated');
     }
-    const user = await ctx.prisma.user.findUnique({ where: { id: ctx.session.user.id } });
+    const user = await ctx.prisma.user.findUnique({ where: { id: ctx.session.user.id },
+      include: {
+      UserRole: {
+        include: {
+          role: true,
+        },
+      },
+    },
+     });
     //console.log('User in findCurrentOne:', user);
     return user;
   }),
