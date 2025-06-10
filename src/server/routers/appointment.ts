@@ -10,7 +10,7 @@ export const appointmentRouter = createTRPCRouter({
       notes: z.string().nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
-      return await ctx.prisma.appointment.create({
+      const appointment = await ctx.prisma.appointment.create({
         data: {
           patientId: ctx.session?.user?.patientId??"",
           doctorId: input.doctorId,
@@ -19,6 +19,7 @@ export const appointmentRouter = createTRPCRouter({
           
         },
       });
+      return appointment;
     }),
 
   findByPatient: protectedProcedure.query(async ({ ctx }) => {

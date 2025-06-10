@@ -14,7 +14,6 @@ export default function CreateAppointmentModal({
   onClose: () => void;
   selectedAppointment: IEditAppointment | null;
 }) {
-  const utils = trpc.useContext();
   const [specialtyId, setSpecialtyId] = useState('');
   const [doctorId, setDoctorId] = useState('');
   const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
@@ -27,14 +26,16 @@ export default function CreateAppointmentModal({
       enabled: !!specialtyId,
     },
   );
+  const utils = trpc.useContext();
   const createAppointment = trpc.appointment.create.useMutation({
     onSuccess: async () => {
-      await utils.appointment.findByPatient.invalidate();
+      await utils.appointment.findMyAppointments.invalidate();
+
       onClose();
     },
   });
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!doctorId || !specialtyId || !appointmentDate) return;
 
