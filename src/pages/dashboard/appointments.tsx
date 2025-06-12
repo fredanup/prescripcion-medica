@@ -123,7 +123,7 @@ export default function Appointments() {
                         // Acción: ver detalles, modal, etc.
                       }}
                     >
-                      Ver
+                      Pagar
                     </button>
                     <button
                       className="rounded-md border font-medium border-pink-500 text-pink-500 py-2 px-4 hover:bg-pink-500 hover:text-white transition-colors"
