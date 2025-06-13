@@ -152,6 +152,7 @@ model Doctor {
 model Specialty {
   id          String        @id @default(cuid())
   name        String
+  price       Float
   doctors     Doctor[] // Médicos con esta especialidad
   Appointment Appointment[]
 }

@@ -8,4 +8,14 @@ export const specialtyRouter = createTRPCRouter({
         orderBy: {name: 'asc'}
     });
   }),
+  getAllWithPrice: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.prisma.specialty.findMany({
+        select :{
+          id: true,
+          name:true,
+          price:true
+        },
+        orderBy: {name: 'asc'}
+    });
+  }),
 });
