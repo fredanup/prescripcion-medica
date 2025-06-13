@@ -15,10 +15,11 @@ export default function CreateAppointmentModal({
   selectedAppointment: IEditAppointment | null;
 }) {
   const [specialtyId, setSpecialtyId] = useState('');
+
   const [doctorId, setDoctorId] = useState('');
   const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
-
+  const [price, setPrice] = useState<number | null>(null);
   const { data: specialties } = trpc.specialty.findAll.useQuery();
   const { data: doctors } = trpc.doctor.findBySpecialty.useQuery(
     { id: specialtyId },
@@ -82,7 +83,13 @@ export default function CreateAppointmentModal({
             <select
               className="block w-full px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               value={specialtyId}
-              onChange={(event) => setSpecialtyId(event.target.value)}
+              onChange={(event) => {
+                const selectedId = event.target.value;
+                setSpecialtyId(selectedId);
+
+                const selected = specialties?.find((s) => s.id === selectedId);
+                setPrice(selected?.price ?? null);
+              }}
             >
               <option value="">Seleccionar</option>
               {specialties?.map((s) => (
@@ -92,6 +99,12 @@ export default function CreateAppointmentModal({
               ))}
             </select>
           </div>
+          {price !== null && (
+            <p className="text-sm text-gray-700">
+              Precio de la consulta:{' '}
+              <span className="font-semibold">S/ {price.toFixed(2)}</span>
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
