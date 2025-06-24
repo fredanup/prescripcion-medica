@@ -14,6 +14,12 @@ export default function Appointments() {
     useState<IEditAppointment | null>(null);
 
   const { data: appointments } = trpc.appointment.findMyAppointments.useQuery();
+  const payForAppointment = trpc.appointment.markAsPaid.useMutation({
+    onSuccess: () => {
+      alert('Pago realizado con éxito. El médico ha sido notificado.');
+      // Opcional: invalidate lista de citas
+    },
+  });
 
   //Función de selección de registro y apertura de modal de edición
   const openEditModal = (appointment: IEditAppointment | null) => {
@@ -119,9 +125,11 @@ export default function Appointments() {
                   <td className="py-4">
                     <button
                       className="rounded-md border font-medium border-sky-500 text-sky-500 mr-4 py-2 px-4 hover:bg-sky-500 hover:text-white transition-colors"
-                      onClick={() => {
-                        // Acción: ver detalles, modal, etc.
-                      }}
+                      onClick={() =>
+                        payForAppointment.mutate({
+                          appointmentId: appointment.id,
+                        })
+                      }
                     >
                       Pagar
                     </button>

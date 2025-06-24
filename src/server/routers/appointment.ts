@@ -1,3 +1,4 @@
+import { sendEmailToDoctor } from "server/email/email";
 import { createTRPCRouter, protectedProcedure } from "server/trpc";
 import { z } from "zod";
 
@@ -55,4 +56,25 @@ export const appointmentRouter = createTRPCRouter({
         },
       });
     }),
+
+  markAsPaid: protectedProcedure
+  .input(z.object({ appointmentId: z.string() }))
+  .mutation(async ({ ctx, input }) => {
+    const appointment = await ctx.prisma.appointment.update({
+      where: { id: input.appointmentId },
+      data: { status: 'completed' },
+      include: {
+        doctor: { include: { user: true } },
+        patient: { include: { user: true } },
+        specialty: true,
+      },
+    });
+
+    // Simular envío de correo
+    await sendEmailToDoctor(appointment); // función aparte
+
+    return appointment;
+  }),
+
 });
+
