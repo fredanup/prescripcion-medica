@@ -14,6 +14,7 @@ export default function Appointments() {
     useState<IEditAppointment | null>(null);
 
   const { data: appointments } = trpc.appointment.findMyAppointments.useQuery();
+
   const payForAppointment = trpc.appointment.markAsPaid.useMutation({
     onSuccess: () => {
       alert('Pago realizado con éxito. El médico ha sido notificado.');

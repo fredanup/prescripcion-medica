@@ -20,6 +20,7 @@ export default function CreateAppointmentModal({
   const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
   const [price, setPrice] = useState<number | null>(null);
+  const [takenSlots, setTakenSlots] = useState<Date[]>([]);
   const { data: specialties } = trpc.specialty.findAll.useQuery();
   const { data: doctors } = trpc.doctor.findBySpecialty.useQuery(
     { id: specialtyId },
@@ -27,6 +28,11 @@ export default function CreateAppointmentModal({
       enabled: !!specialtyId,
     },
   );
+  const { data: slots, refetch: fetchTakenSlots } =
+    trpc.appointment.findTakenSlots.useQuery(
+      { doctorId },
+      { enabled: !!doctorId },
+    );
   const utils = trpc.useContext();
   const createAppointment = trpc.appointment.create.useMutation({
     onSuccess: async () => {
@@ -36,10 +42,25 @@ export default function CreateAppointmentModal({
     },
   });
 
+  useEffect(() => {
+    if (slots) {
+      const parsedSlots = slots.map((s) => new Date(s));
+      setTakenSlots(parsedSlots);
+    }
+  }, [slots]);
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!doctorId || !specialtyId || !appointmentDate) return;
+    const isSlotTaken = takenSlots.some(
+      (slot) =>
+        Math.abs(slot.getTime() - appointmentDate.getTime()) < 15 * 60 * 1000,
+    ); // 15 minutes in milliseconds
 
+    if (isSlotTaken) {
+      alert('La hora seleccionada ya está ocupada. Por favor, elija otra.');
+      return;
+    }
     createAppointment.mutate({
       doctorId,
       specialtyId,
@@ -57,6 +78,12 @@ export default function CreateAppointmentModal({
       );
     }
   }, [selectedAppointment]);
+
+  useEffect(() => {
+    if (doctorId) {
+      fetchTakenSlots();
+    }
+  }, [doctorId, fetchTakenSlots]);
 
   if (!isOpen) return null;
 
