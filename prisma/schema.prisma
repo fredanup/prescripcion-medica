@@ -176,8 +176,8 @@ model Patient {
   clinicalHistory ClinicalHistory[]
   consultations   Consultation[]
   allergies       Allergy[]
-  medications     Medication[]
-  medicalOrders   MedicalOrder[]
+
+  medicalOrders MedicalOrder[]
 
   DoctorPatient DoctorPatient[]
 
@@ -216,6 +216,8 @@ model Appointment {
   doctor    Doctor    @relation(fields: [doctorId], references: [id])
   patient   Patient   @relation(fields: [patientId], references: [id])
   specialty Specialty @relation(fields: [specialtyId], references: [id])
+
+  Consultation Consultation[]
 }
 
 model ClinicalHistory {
@@ -227,15 +229,18 @@ model ClinicalHistory {
 }
 
 model Consultation {
-  id        String  @id @default(cuid())
-  patientId String
-  patient   Patient @relation(fields: [patientId], references: [id])
-  doctorId  String
-  doctor    Doctor  @relation(fields: [doctorId], references: [id])
+  id            String       @id @default(cuid())
+  patientId     String
+  patient       Patient      @relation(fields: [patientId], references: [id])
+  doctorId      String
+  doctor        Doctor       @relation(fields: [doctorId], references: [id])
+  appointmentId String? // Relación opcional con Appointment
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
 
   date          DateTime                 @default(now())
   reason        String // Motivo de consulta
   diagnosis     String?
+  plan          String
   notes         String?
   indications   MedicalIndication[]
   prescriptions MedicationPrescription[]
@@ -256,13 +261,32 @@ model MedicationPrescription {
   consultationId String
   consultation   Consultation @relation(fields: [consultationId], references: [id])
 
-  name        String // Paracetamol
+  medication  String // Paracetamol
   dosage      String // 500mg
   frequency   String // cada 8h
   duration    String // 5 días
-  notes       String?
+  route       String
   dispensed   Boolean   @default(false)
   dispensedAt DateTime?
+}
+
+model MedicalOrder {
+  id             String           @id @default(cuid())
+  patientId      String
+  patient        Patient          @relation(fields: [patientId], references: [id])
+  doctorId       String
+  doctor         Doctor           @relation(fields: [doctorId], references: [id])
+  consultationId String?
+  consultation   Consultation?    @relation(fields: [consultationId], references: [id])
+  destination    String // 'lab' o 'pharmacy'
+  area           MedicalOrderType // Ej: "laboratorio", "farmacia", "imagen"
+  description    String
+  status         String // 'pendiente', 'realizada', 'cancelada'
+  date           DateTime         @default(now())
+  results        String? // (opcional) resultado textual
+  resultFile     String? // (opcional) URL a PDF/imágenes
+  dispensedAt    DateTime? // (si aplica a farmacia)
+  createdAt      DateTime         @default(now())
 }
 
 model Allergy {
@@ -275,35 +299,9 @@ model Allergy {
   date      DateTime @default(now())
 }
 
-model Medication {
-  id        String    @id @default(cuid())
-  patientId String
-  patient   Patient   @relation(fields: [patientId], references: [id])
-  name      String // Nombre del fármaco
-  dosage    String? // Ej: 500mg
-  frequency String? // Ej: 1 cada 8 horas
-  startDate DateTime  @default(now())
-  endDate   DateTime?
-  notes     String?
-}
-
-model MedicalOrder {
-  id             String        @id @default(cuid())
-  patientId      String
-  patient        Patient       @relation(fields: [patientId], references: [id])
-  doctorId       String
-  doctor         Doctor        @relation(fields: [doctorId], references: [id])
-  consultationId String?
-  consultation   Consultation? @relation(fields: [consultationId], references: [id])
-
-  area        String // Ej: "laboratorio", "farmacia", "imagen"
-  description String
-  status      String // 'pendiente', 'realizada', 'cancelada'
-  date        DateTime  @default(now())
-  results     String? // (opcional) resultado textual
-  resultFile  String? // (opcional) URL a PDF/imágenes
-  dispensedAt DateTime? // (si aplica a farmacia)
-  createdAt   DateTime  @default(now())
+enum MedicalOrderType {
+  laboratory
+  imaging
 }
 
 model Pharmacist {

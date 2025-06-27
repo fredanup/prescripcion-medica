@@ -2,16 +2,23 @@ import Layout from 'utilities/layout';
 import FormTitle from 'utilities/form-title';
 import Image from 'next/image';
 import ReactDatePicker from 'react-datepicker';
+import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { trpc } from 'utils/trpc';
 import 'react-datepicker/dist/react-datepicker.css';
 
-export default function DoctorAppointmentsPage() {
+export default function Callings() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const { data: appointments, isLoading } =
     trpc.appointment.findDoctorAppointmentsByDate.useQuery({
       date: selectedDate,
     });
+
+  const router = useRouter();
+
+  const handleAttend = (appointmentId: string) => {
+    router.push(`/dashboard/consultations/${appointmentId}`);
+  };
 
   return (
     <Layout>
@@ -41,6 +48,7 @@ export default function DoctorAppointmentsPage() {
                 <th className="py-4 pr-2">Hora</th>
                 <th className="py-4 pr-2">Motivo</th>
                 <th className="py-4 pr-2">Historial Breve</th>
+                <th className="py-4 pr-2">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -77,6 +85,14 @@ export default function DoctorAppointmentsPage() {
                   <td className="py-4 pr-2">
                     {appt.patient.clinicalHistory?.[0]?.summary ??
                       'Sin historial'}
+                  </td>
+                  <td className="py-4 pr-2">
+                    <button
+                      className="rounded-md border font-medium border-green-600 text-green-600 py-2 px-4 hover:bg-green-600 hover:text-white transition-colors"
+                      onClick={() => handleAttend(appt.id)}
+                    >
+                      Atender
+                    </button>
                   </td>
                 </tr>
               ))}
