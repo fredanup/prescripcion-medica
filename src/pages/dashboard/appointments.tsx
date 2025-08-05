@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import CreateAppointmentModal from 'pages/modals/create-appointment-modal';
+import PaymentModal from 'pages/modals/payment-modal';
 import { useState } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
@@ -9,25 +10,29 @@ import { trpc } from 'utils/trpc';
 
 export default function Appointments() {
   const [editIsOpen, setEditIsOpen] = useState(false);
-  //Hook de estado que almacena el registro seleccionado
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    string | null
+  >(null);
   const [selectedAppointment, setSelectedAppointment] =
     useState<IEditAppointment | null>(null);
 
-  const { data: appointments } = trpc.appointment.findMyAppointments.useQuery();
+  const { data: appointments, refetch } =
+    trpc.appointment.findMyAppointments.useQuery();
 
   const payForAppointment = trpc.appointment.markAsPaid.useMutation({
     onSuccess: () => {
       alert('Pago realizado con éxito. El médico ha sido notificado.');
-      // Opcional: invalidate lista de citas
+      refetch();
     },
   });
 
-  //Función de selección de registro y apertura de modal de edición
   const openEditModal = (appointment: IEditAppointment | null) => {
     setSelectedAppointment(appointment);
     setEditIsOpen(true);
   };
-  //Función de cierre de modal de edición
+
   const closeEditModal = () => {
     setEditIsOpen(false);
   };
@@ -41,18 +46,6 @@ export default function Appointments() {
 
   return (
     <>
-      <svg
-        viewBox="0 0 512 512"
-        className={`fixed bottom-20 z-10 right-8 h-12 w-12 cursor-pointer rounded-lg fill-blue-600 drop-shadow-lg md:hidden ${
-          editIsOpen ? 'hidden' : ''
-        }`}
-        onClick={(event) => {
-          event.stopPropagation();
-          openEditModal(null);
-        }}
-      >
-        <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM232 344V280H168c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H280v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z" />
-      </svg>
       <Layout>
         <FormTitle text="Citas" />
         <div className="flex flex-row justify-between mb-4">
@@ -63,11 +56,10 @@ export default function Appointments() {
               openEditModal(null);
             }}
           >
-            <svg viewBox="0 0 448 512" className={`h-4 w-4 fill-white`}>
+            <svg viewBox="0 0 448 512" className="h-4 w-4 fill-white">
               <path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z" />
             </svg>
-
-            <p className="text-white text-base font-medium ">Agregar</p>
+            <p className="text-white text-base font-medium">Agregar</p>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -84,10 +76,10 @@ export default function Appointments() {
             <tbody>
               {appointments?.map((appointment, index) => (
                 <tr
-                  className="border-b border-gray-200 text-sm font-light"
                   key={index}
+                  className="border-b border-gray-200 text-sm font-light"
                 >
-                  <td className="py-4 pr-2 flex flex-row gap-3 items-center text-sm font-light">
+                  <td className="py-4 pr-2 flex flex-row gap-3 items-center">
                     <Image
                       className="rounded-full"
                       width={50}
@@ -124,16 +116,18 @@ export default function Appointments() {
                     {appointmentStatusLabel[appointment.status]}
                   </td>
                   <td className="py-4">
-                    <button
-                      className="rounded-md border font-medium border-sky-500 text-sky-500 mr-4 py-2 px-4 hover:bg-sky-500 hover:text-white transition-colors"
-                      onClick={() =>
-                        payForAppointment.mutate({
-                          appointmentId: appointment.id,
-                        })
-                      }
-                    >
-                      Pagar
-                    </button>
+                    {appointment.status === 'pending_payment' && (
+                      <button
+                        onClick={() => {
+                          setSelectedAppointmentId(appointment.id);
+                          setPaymentAmount(appointment.specialty.price); // 🔹 precio viene de Specialty
+                          setIsPaymentOpen(true);
+                        }}
+                        className="rounded-md border font-medium border-sky-500 text-sky-500 mr-4 py-2 px-4 hover:bg-sky-500 hover:text-white transition-colors"
+                      >
+                        Pagar
+                      </button>
+                    )}
                     <button
                       className="rounded-md border font-medium border-pink-500 text-pink-500 py-2 px-4 hover:bg-pink-500 hover:text-white transition-colors"
                       onClick={() => {
@@ -149,11 +143,26 @@ export default function Appointments() {
           </table>
         </div>
       </Layout>
+
       {editIsOpen && (
         <CreateAppointmentModal
           isOpen={editIsOpen}
           onClose={closeEditModal}
           selectedAppointment={selectedAppointment}
+        />
+      )}
+
+      {isPaymentOpen && (
+        <PaymentModal
+          totalAmount={paymentAmount}
+          onClose={() => setIsPaymentOpen(false)}
+          onSuccess={() => {
+            if (selectedAppointmentId) {
+              payForAppointment.mutate({
+                appointmentId: selectedAppointmentId,
+              });
+            }
+          }}
         />
       )}
     </>

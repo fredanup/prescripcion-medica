@@ -86,6 +86,22 @@ export const userBranchSchema = z.object({
     date :z.date()
   });
 
+  export const paymentSchema = z.object({
+    transactionAmount: z.number(),
+    token: z.string(),
+    description: z.string(),
+    installments: z.number(),
+    payment_method_id: z.string(),
+    issuer_id: z.string(),
+    payer: z.object({
+      email: z.string().email(),
+      identification: z.object({
+        type: z.string(),
+        number: z.string(),
+      }),
+    }),
+  });
+
   export type IUserBranch = z.infer<typeof userBranchSchema>;
   export type IEditUserBranch = z.infer<typeof editUserBranchSchema>;
   export type IBranch = z.infer<typeof branchSchema>;
@@ -95,3 +111,4 @@ export const userBranchSchema = z.object({
   export type IEditApplication = z.infer<typeof editApplicationSchema>;
   export type IJobApplication=z.infer<typeof jobApplicationSchema>;
   export type IEditJobApplication=z.infer<typeof editJobApplicationSchema>;
+  export type PaymentRequestBody = z.infer<typeof paymentSchema>;
