@@ -31,10 +31,11 @@ export default function PaymentModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [brickController, setBrickController] = useState<any>(null);
 
-  // Generar un ID único para cada instancia del modal
+  // ID único del contenedor
   const containerId = useRef(
     `cardPaymentBrick_container_${Date.now()}_${Math.random()}`,
   );
+
   const isInitialized = useRef(false);
   const isMounted = useRef(true);
 
@@ -47,19 +48,18 @@ export default function PaymentModal({
         throw new Error('Error de configuración: Falta la clave pública.');
       }
 
-      // Esperar un poco más para asegurar que el DOM esté listo
+      // Pequeño delay para asegurar que el DOM esté listo
       await new Promise((resolve) => setTimeout(resolve, 200));
 
       if (!isMounted.current) return;
 
       const mp = new window.MercadoPago(publicKey);
 
-      // Limpiar completamente el contenedor
+      // Limpiar contenedor antes de crear
       const container = document.getElementById(containerId.current);
       if (container) {
         container.innerHTML = '';
-        // Forzar reflow del DOM
-        container.offsetHeight;
+        container.offsetHeight; // Forzar reflow
       }
 
       const settings = {
@@ -67,9 +67,7 @@ export default function PaymentModal({
         initialization: { amount: totalAmount },
         callbacks: {
           onReady: () => {
-            if (isMounted.current) {
-              setIsLoading(false);
-            }
+            if (isMounted.current) setIsLoading(false);
           },
           onSubmit: async (cardFormData: PaymentRequestBody) => {
             try {
@@ -101,6 +99,7 @@ export default function PaymentModal({
               if (isMounted.current) {
                 setSuccessMessage(`Pago exitoso. ID: ${data.id}`);
                 onSuccess?.();
+
                 setTimeout(() => {
                   if (isMounted.current) {
                     handleClose();
@@ -138,7 +137,6 @@ export default function PaymentModal({
         setBrickController(controller);
         isInitialized.current = true;
       } else {
-        // Si el componente se desmontó mientras se creaba, limpiamos
         controller.unmount();
       }
     } catch (err) {
@@ -174,9 +172,10 @@ export default function PaymentModal({
       if (isMounted.current) {
         waitForMP().then(createMPFormContainer);
       }
-    }, 300); // Aumentamos el delay inicial
+    }, 300);
 
     return () => {
+      // 🔹 Aquí es el desmontaje real
       isMounted.current = false;
       clearTimeout(timer);
 
@@ -188,7 +187,6 @@ export default function PaymentModal({
         }
       }
 
-      // Limpiar el contenedor del DOM
       const container = document.getElementById(containerId.current);
       if (container) {
         container.innerHTML = '';
@@ -196,11 +194,9 @@ export default function PaymentModal({
 
       isInitialized.current = false;
     };
-  }, []); // Sin dependencias
+  }, [createMPFormContainer]); // 🔹 sin brickController para evitar bucle
 
   const handleClose = async () => {
-    isMounted.current = false;
-
     try {
       if (brickController) {
         await brickController.unmount();
@@ -210,7 +206,6 @@ export default function PaymentModal({
       console.error('Error al desmontar brick:', error);
     }
 
-    // Limpiar completamente el estado
     const container = document.getElementById(containerId.current);
     if (container) {
       container.innerHTML = '';
