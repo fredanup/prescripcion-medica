@@ -38,30 +38,30 @@ export default function Appointments() {
   };
 
   const statusColor: Record<string, string> = {
-    pending_payment: 'text-yellow-600',
-    confirmed: 'text-blue-600',
-    cancelled: 'text-red-600',
-    completed: 'text-green-600',
+    pending_payment: 'bg-yellow-100 text-yellow-700',
+    confirmed: 'bg-blue-100 text-blue-700',
+    cancelled: 'bg-red-100 text-red-700',
+    completed: 'bg-green-100 text-green-700',
   };
 
   return (
     <>
       <Layout>
-        <FormTitle text="Citas" />
-        <div className="flex flex-row justify-between mb-4">
-          <div
-            className="hidden md:w-32 md:rounded-full md:border md:cursor-pointer md:drop-shadow-lg md:bg-blue-600 md:p-2 md:items-center md:flex md:flex-row md:gap-1 md:justify-center"
-            onClick={(event) => {
-              event.stopPropagation();
-              openEditModal(null);
-            }}
-          >
-            <svg viewBox="0 0 448 512" className="h-4 w-4 fill-white">
-              <path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z" />
-            </svg>
-            <p className="text-white text-base font-medium">Agregar</p>
+        <div className="flex flex-col mb-4">
+          <div className="flex items-center justify-between">
+            <FormTitle text="Citas" />
+            <button
+              onClick={() => openEditModal(null)}
+              className="bg-blue-600 hover:bg-blue-700 transition text-white font-semibold px-6 py-2 rounded shadow flex items-center gap-2"
+            >
+              Agregar
+            </button>
           </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Aquí puedes ver y gestionar tus próximas citas con el médico.
+          </p>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead className="border-b border-gray-200 text-left text-black text-sm font-light">
@@ -108,13 +108,16 @@ export default function Appointments() {
                       minute: '2-digit',
                     })}
                   </td>
-                  <td
-                    className={`py-4 pr-2 font-medium ${
-                      statusColor[appointment.status]
-                    }`}
-                  >
-                    {appointmentStatusLabel[appointment.status]}
+                  <td className="py-4 pr-2">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                        statusColor[appointment.status]
+                      }`}
+                    >
+                      {appointmentStatusLabel[appointment.status]}
+                    </span>
                   </td>
+
                   <td className="py-4">
                     {appointment.status === 'pending_payment' && (
                       <button
@@ -128,14 +131,6 @@ export default function Appointments() {
                         Pagar
                       </button>
                     )}
-                    <button
-                      className="rounded-md border font-medium border-pink-500 text-pink-500 py-2 px-4 hover:bg-pink-500 hover:text-white transition-colors"
-                      onClick={() => {
-                        // Acción: cancelar o reprogramar
-                      }}
-                    >
-                      Cancelar
-                    </button>
                   </td>
                 </tr>
               ))}

@@ -80,7 +80,7 @@ export const appointmentRouter = createTRPCRouter({
   .mutation(async ({ ctx, input }) => {
     const appointment = await ctx.prisma.appointment.update({
       where: { id: input.appointmentId },
-      data: { status: 'completed' },
+      data: { status: 'confirmed' },
       include: {
         doctor: { include: { user: true } },
         patient: { include: { user: true } },
@@ -132,7 +132,9 @@ export const appointmentRouter = createTRPCRouter({
             gte: startOfToday,
            lte: endOfToday,
           },
-          status: 'completed',
+          status: {
+          in: ['completed', 'confirmed'], // Solo citas pendientes o confirmadas
+        }
         },
         include: {
           patient: {

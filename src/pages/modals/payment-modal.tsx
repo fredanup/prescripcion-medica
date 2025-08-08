@@ -148,6 +148,7 @@ export default function PaymentModal({
         setIsLoading(false);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalAmount, onSuccess]);
 
   useEffect(() => {
@@ -187,6 +188,7 @@ export default function PaymentModal({
         }
       }
 
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       const container = document.getElementById(containerId.current);
       if (container) {
         container.innerHTML = '';
@@ -194,6 +196,7 @@ export default function PaymentModal({
 
       isInitialized.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createMPFormContainer]); // 🔹 sin brickController para evitar bucle
 
   const handleClose = async () => {

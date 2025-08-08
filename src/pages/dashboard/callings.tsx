@@ -23,17 +23,30 @@ export default function Callings() {
   return (
     <Layout>
       <FormTitle text="Citas por Atender" />
-
-      <div className="mb-4">
-        <label className="text-sm font-bold text-black">
-          Seleccionar Fecha:
+      <div className="mb-6 ">
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
+          Seleccionar fecha:
         </label>
-        <ReactDatePicker
-          selected={selectedDate}
-          onChange={(date) => date && setSelectedDate(date)}
-          dateFormat="dd/MM/yyyy"
-          className="mt-1 border rounded px-2 py-1"
-        />
+        <div className="relative inline-block">
+          <ReactDatePicker
+            selected={selectedDate}
+            onChange={(date) => date && setSelectedDate(date)}
+            dateFormat="dd/MM/yyyy"
+            className="cursor-pointer w-48 border border-gray-300 rounded-md px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            calendarClassName="!z-50"
+          />
+          <svg
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="w-4 h-4 text-gray-500 absolute top-1/2 right-3 transform -translate-y-1/2 pointer-events-none"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 011.08 1.04l-4.25 4.25a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
       </div>
 
       {isLoading ? (
@@ -87,12 +100,32 @@ export default function Callings() {
                       'Sin historial'}
                   </td>
                   <td className="py-4 pr-2">
-                    <button
-                      className="rounded-md border font-medium border-green-600 text-green-600 py-2 px-4 hover:bg-green-600 hover:text-white transition-colors"
-                      onClick={() => handleAttend(appt.id)}
-                    >
-                      Atender
-                    </button>
+                    {appt.status === 'confirmed' && (
+                      <button
+                        className="bg-green-600 hover:bg-green-700 transition text-white font-semibold px-6 py-2 rounded shadow"
+                        onClick={() => handleAttend(appt.id)}
+                      >
+                        Atender
+                      </button>
+                    )}
+
+                    {appt.status === 'completed' && (
+                      <span className="text-sm text-gray-500 italic">
+                        Atención completada
+                      </span>
+                    )}
+
+                    {appt.status === 'pending_payment' && (
+                      <span className="text-sm text-yellow-600 italic">
+                        Pago pendiente
+                      </span>
+                    )}
+
+                    {appt.status === 'cancelled' && (
+                      <span className="text-sm text-red-600 italic">
+                        Cita cancelada
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

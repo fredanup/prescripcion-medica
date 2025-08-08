@@ -78,7 +78,7 @@ export default function Patients() {
                   <td className="py-4 pr-2">{user.Branch?.name}</td>
                   <td className="py-4">
                     <button
-                      className="rounded-md border font-medium border-sky-500 text-sky-500 mr-4 py-2 px-4 hover:bg-sky-500 hover:text-white transition-colors"
+                      className="bg-blue-600 hover:bg-blue-700 transition text-white font-semibold px-6 py-2 rounded shadow"
                       onClick={(event) => {
                         event.stopPropagation();
                       }}
