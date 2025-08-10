@@ -44,11 +44,6 @@ export const menuByRole = {
     { label: 'Resultados', path: '/dashboard/results', icon: FileText },
     { label: 'Citas', path: '/dashboard/appointments', icon: Calendar },
     { label: 'Notificaciones', path: '/dashboard/notifications', icon: Bell },
-    {
-      label: 'Actualizar Datos',
-      path: '/dashboard/update-profile',
-      icon: Settings,
-    },
   ],
   laboratory_staff: [
     {

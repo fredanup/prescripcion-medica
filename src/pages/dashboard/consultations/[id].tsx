@@ -94,7 +94,7 @@ export default function ConsultationForm() {
     console.log('[createConsultation] payload:', payload);
 
     try {
-      await createConsultation(payload);
+      createConsultation(payload);
       // onSuccess navega y hace invalidate
     } catch (err: any) {
       // Mostramos error detallado si es de tRPC/Zod

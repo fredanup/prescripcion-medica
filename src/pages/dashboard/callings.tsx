@@ -78,9 +78,9 @@ export default function Callings() {
   const router = useRouter();
 
   const { data: appointments, isLoading } =
-    trpc.appointment.findDoctorAppointmentsByDate.useQuery({
-      date: selectedDate,
-    });
+    trpc.appointment.findDoctorAppointmentsByDate.useQuery(
+      { date: selectedDate }, // <- Input del query
+    );
 
   const isEmpty = !isLoading && (!appointments || appointments.length === 0);
 

@@ -229,10 +229,10 @@ export default function PaymentModal({
       {successMessage && <div className="text-green-600">{successMessage}</div>}
       {errorMessage && <div className="text-red-600">{errorMessage}</div>}
       <div id={containerId.current}></div>
-      <div className="pt-2 flex flex-row justify-end gap-2 border-t border-gray-200">
+      <div className="pt-4 flex justify-end gap-2 border-t border-[#E4E8EB]">
         <button
           type="button"
-          className="rounded-lg border bg-gray-500 px-4 py-1 text-base font-medium text-white"
+          className="px-4 py-2 rounded-lg border border-[#E4E8EB] bg-[#F7F7F8] text-sm font-medium text-[#374151] transition-colors hover:bg-white"
           onClick={handleClose}
         >
           Cancelar

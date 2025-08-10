@@ -1,8 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# sw
-/public/sw.js
-/public/sw.js.map
+# por archivo
+public/sw.js.map
+# o mejor, todos los source maps
+**/*.map
+
 
 # dependencies
 /node_modules
