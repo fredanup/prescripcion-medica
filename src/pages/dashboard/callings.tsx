@@ -6,6 +6,7 @@ import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
 import { trpc } from 'utils/trpc';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useSession } from 'next-auth/react';
 
 function getInitials(name?: string | null, lastName?: string | null) {
   const n = (name ?? '').trim().split(' ')[0];
@@ -76,10 +77,15 @@ export default function Callings() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const datepickerRef = useRef<any>(null);
   const router = useRouter();
-
+  const { data: session } = useSession();
   const { data: appointments, isLoading } =
     trpc.appointment.findDoctorAppointmentsByDate.useQuery(
       { date: selectedDate }, // <- Input del query
+      {
+        enabled: !!session?.user?.doctorId, // Solo ejecutar si hay sesión válida
+        retry: false, // No reintentar en caso de error de autenticación
+        refetchOnWindowFocus: false,
+      },
     );
 
   const isEmpty = !isLoading && (!appointments || appointments.length === 0);

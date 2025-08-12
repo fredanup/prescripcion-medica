@@ -228,6 +228,12 @@ model ClinicalHistory {
   summary   String // Cambio de `text` a algo más descriptivo
 }
 
+enum ConsultationStatus {
+  in_progress
+  completed
+  cancelled
+}
+
 model Consultation {
   id            String       @id @default(cuid())
   patientId     String
@@ -238,6 +244,8 @@ model Consultation {
   appointment   Appointment? @relation(fields: [appointmentId], references: [id])
 
   date          DateTime                 @default(now())
+  status        ConsultationStatus       @default(in_progress) // 👈 NUEVO
+  closedAt      DateTime? // 👈 NUEVO
   reason        String // Motivo de consulta
   diagnosis     String?
   plan          String
@@ -245,7 +253,19 @@ model Consultation {
   indications   MedicalIndication[]
   prescriptions MedicationPrescription[]
 
-  medicalOrders MedicalOrder[]
+  medicalOrders         MedicalOrder[]
+  consultationDiagnosis ConsultationDiagnosis[] // 👈 nombre de la relación
+}
+
+model ConsultationDiagnosis {
+  id             String       @id @default(cuid())
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+
+  code     String?
+  label    String
+  severity String?
+  notes    String?
 }
 
 model MedicalIndication {
@@ -270,23 +290,37 @@ model MedicationPrescription {
   dispensedAt DateTime?
 }
 
+enum MedicalOrderStatus {
+  pending
+  received // laboratorio recibió la orden
+  in_process // opcional
+  reported // resultados listos
+  cancelled
+}
+
+enum MedicalOrderPriority {
+  normal
+  urgent
+}
+
 model MedicalOrder {
-  id             String           @id @default(cuid())
+  id             String        @id @default(cuid())
   patientId      String
-  patient        Patient          @relation(fields: [patientId], references: [id])
+  patient        Patient       @relation(fields: [patientId], references: [id])
   doctorId       String
-  doctor         Doctor           @relation(fields: [doctorId], references: [id])
+  doctor         Doctor        @relation(fields: [doctorId], references: [id])
   consultationId String?
-  consultation   Consultation?    @relation(fields: [consultationId], references: [id])
-  destination    String // 'lab' o 'pharmacy'
-  area           MedicalOrderType // Ej: "laboratorio", "farmacia", "imagen"
-  description    String
-  status         String // 'pendiente', 'realizada', 'cancelada'
-  date           DateTime         @default(now())
-  results        String? // (opcional) resultado textual
-  resultFile     String? // (opcional) URL a PDF/imágenes
-  dispensedAt    DateTime? // (si aplica a farmacia)
-  createdAt      DateTime         @default(now())
+  consultation   Consultation? @relation(fields: [consultationId], references: [id])
+
+  area        MedicalOrderType // Ej: "laboratorio", "farmacia", "imagen"
+  description String
+  status      MedicalOrderStatus   @default(pending) // 'pendiente', 'realizada', 'cancelada'
+  priority    MedicalOrderPriority @default(normal) // 👈 opcional
+  date        DateTime             @default(now())
+  results     String? // (opcional) resultado textual
+  resultFile  String? // (opcional) URL a PDF/imágenes
+  dispensedAt DateTime? // (si aplica a farmacia)
+  createdAt   DateTime             @default(now())
 }
 
 model Allergy {
