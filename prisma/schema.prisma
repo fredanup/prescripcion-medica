@@ -260,12 +260,12 @@ model Consultation {
 model ConsultationDiagnosis {
   id             String       @id @default(cuid())
   consultationId String
-  consultation   Consultation @relation(fields: [consultationId], references: [id])
-
-  code     String?
-  label    String
-  severity String?
-  notes    String?
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  code           String?
+  label          String
+  severity       String?
+  notes          String?
+  createdAt      DateTime     @default(now())
 }
 
 model MedicalIndication {

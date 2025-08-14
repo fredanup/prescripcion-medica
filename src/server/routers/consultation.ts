@@ -146,6 +146,11 @@ export const consultationRouter = createTRPCRouter({
       });
       if (!owns) throw new TRPCError({ code: 'FORBIDDEN', message: 'No autorizado' });
 
+        // Limpia y vuelve a crear (idempotente simple)
+      await ctx.prisma.consultationDiagnosis.deleteMany({
+        where: { consultationId: input.consultationId }
+      });
+
       await ctx.prisma.consultationDiagnosis.createMany({
         data: input.items.map((d) => ({
           consultationId: input.consultationId,
@@ -193,7 +198,7 @@ export const consultationRouter = createTRPCRouter({
           patientId: c.patientId,
           doctorId: c.doctorId,
           area: o.type === 'lab' ? 'laboratory' : 'imaging',
-          description: o.label + (o.code ? ` (${o.code})` : ''),
+          description: [o.label, o.code ? `(${o.code})` : '', o.notes ? `- ${o.notes}` : ''].filter(Boolean).join(' '),
           status: 'pending',                         // enum en Prisma
           priority: o.priority ?? 'normal',          // enum en Prisma
           results: null,
@@ -282,6 +287,11 @@ export const consultationRouter = createTRPCRouter({
           patient: { include: { user: true } },
           doctor:  { include: { user: true } },
           consultationDiagnosis: true, // nombre de la relación en Prisma
+          appointment:{
+            include: {
+              specialty: true, // incluye especialidad si existe
+            },
+          }
         },
       });
       if (!data) throw new TRPCError({ code: 'FORBIDDEN', message: 'No autorizado' });

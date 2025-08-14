@@ -14,19 +14,24 @@ type Prescription = {
 
 // Tipos locales para payloads nuevos
 type DiagnosisItem = {
-  id: string; // Para manejar edición/remoción
+  id: string; // Para manejar edición/remoción en UI
   code?: string;
   label: string;
   severity?: 'mild' | 'moderate' | 'severe';
   notes?: string;
 };
+
 type OrderItem = {
+  id: string; // Para claves estables y remover por fila
   type: 'lab' | 'imaging';
   code?: string;
   label: string;
   priority?: 'normal' | 'urgent';
   notes?: string;
 };
+
+const makeId = () =>
+  `id_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 export default function ConsultationForm() {
   const router = useRouter();
@@ -35,19 +40,17 @@ export default function ConsultationForm() {
   const utils = trpc.useContext();
 
   // Guardamos el id de la consulta creada para enlazar diagnóstico/órdenes
-  const [consultationId, setConsultationId] = useState<string | null>(null); // NUEVO
+  const [consultationId, setConsultationId] = useState<string | null>(null);
 
   const {
     mutateAsync: createConsultation,
-    isPending,
+    isPending: isCreatingConsultation,
     error: mutationError,
   } = trpc.consultation.create.useMutation({
     onSuccess: async (created) => {
-      // Esperamos que el backend retorne { id: string }
-      if (created?.id) setConsultationId(created.id); // NUEVO
+      if (created?.id) setConsultationId(created.id);
       await utils.appointment.findDoctorAppointmentsByDate.invalidate();
-      // Sugerencia: ya no redirigir inmediatamente; dejamos que complete diagnóstico/órdenes.
-      // router.push('/dashboard/callings');
+      // No redirigimos aún; seguimos con diagnóstico/órdenes
     },
   });
 
@@ -57,11 +60,22 @@ export default function ConsultationForm() {
   >('consulta');
 
   // Mutations nuevas según schema
-
-  const closeConsultation = trpc.consultation.close.useMutation(); // NUEVO
+  const closeConsultation = trpc.consultation.close.useMutation();
   const saveDraft = trpc.consultation.saveDraft.useMutation();
-  const createDiagnosis = trpc.consultation.createDiagnosis.useMutation(); // NUEVO
-  const createOrders = trpc.consultation.createOrders.useMutation(); // NUEVO
+  const createDiagnosis = trpc.consultation.createDiagnosis.useMutation({
+    onSuccess: async () => {
+      await utils.consultation.getSummary.invalidate();
+    },
+  });
+  const createOrders = trpc.consultation.createOrders.useMutation({
+    onSuccess: async () => {
+      await utils.consultation.getSummary.invalidate();
+    },
+  });
+  const summary = trpc.consultation.getSummary.useQuery(
+    { consultationId: consultationId ?? '' },
+    { enabled: !!consultationId },
+  );
 
   // Estado original
   const [reason, setReason] = useState('');
@@ -74,28 +88,78 @@ export default function ConsultationForm() {
   ]);
 
   // Estado para nuevos tabs
-  const [dxItems, setDxItems] = useState<DiagnosisItem[]>([]); // NUEVO
-  const [orderDraft, setOrderDraft] = useState<OrderItem>({
-    type: 'lab',
-    label: '',
-  }); // NUEVO
-  const [orders, setOrders] = useState<OrderItem[]>([]); // NUEVO
+  const [dxItems, setDxItems] = useState<DiagnosisItem[]>([]);
+  const [orders, setOrders] = useState<OrderItem[]>([
+    {
+      id: makeId(),
+      type: 'lab',
+      code: '',
+      label: '',
+      priority: 'normal',
+      notes: '',
+    },
+  ]);
 
-  const addDx = () => {
-    setDxItems((prev) => [...prev, { id: crypto.randomUUID(), label: '' }]);
-  };
-  const removeDx = (id: string) => {
+  // Helpers Órdenes
+  const addOrderRow = () =>
+    setOrders((prev) => [
+      ...prev,
+      {
+        id: makeId(),
+        type: 'lab',
+        code: '',
+        label: '',
+        priority: 'normal',
+        notes: '',
+      },
+    ]);
+
+  const removeOrderRow = (id: string) =>
+    setOrders((prev) => prev.filter((o) => o.id !== id));
+
+  const updateOrderField = <K extends keyof OrderItem>(
+    idx: number,
+    key: K,
+    value: OrderItem[K],
+  ) =>
+    setOrders((prev) => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], [key]: value };
+      return copy;
+    });
+
+  const canSaveOrders =
+    !!consultationId &&
+    orders.length > 0 &&
+    orders.every((o) => o.label.trim().length > 0);
+
+  // Helpers Diagnóstico
+  const addDx = () =>
+    setDxItems((prev) => [...prev, { id: makeId(), label: '' }]);
+  const removeDx = (id: string) =>
     setDxItems((prev) => prev.filter((d) => d.id !== id));
-  };
 
   const canSaveDx =
     !!consultationId &&
     dxItems.length > 0 &&
     dxItems.every((d) => d.label.trim().length > 0);
 
+  const fmt = (d?: string | Date | null) =>
+    d
+      ? new Date(d).toLocaleString('es-PE', {
+          year: 'numeric',
+          month: 'long',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '-';
+
+  // Estilos base
   const inputClass =
     'w-full bg-[#F7F7F8] border border-[#E4E8EB] rounded-lg px-3 py-2 text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-gray-300 transition-shadow';
 
+  // Recetas
   const addPrescription = () => {
     setPrescriptions((prev) => [
       ...prev,
@@ -145,8 +209,8 @@ export default function ConsultationForm() {
     try {
       const result = await createConsultation(payload);
       if (result?.id) {
-        setConsultationId(result.id); // NUEVO
-        setActiveTab('diagnostico'); // NUEVO: guiar al siguiente paso
+        setConsultationId(result.id);
+        setActiveTab('diagnostico'); // siguiente paso
       }
     } catch (err: any) {
       const zodIssues = err?.data?.zodError?.fieldErrors;
@@ -339,7 +403,7 @@ export default function ConsultationForm() {
                           type="button"
                           onClick={() => removePrescription(idx)}
                           className="mt-1 px-3 py-1 rounded bg-[#F7F7F8] border border-[#E4E8EB] text-[#374151] text-xs hover:bg-white transition-colors disabled:opacity-60"
-                          disabled={isPending}
+                          disabled={isCreatingConsultation}
                         >
                           Quitar
                         </button>
@@ -354,7 +418,7 @@ export default function ConsultationForm() {
                   type="button"
                   onClick={addPrescription}
                   className="px-4 py-2 rounded-lg bg-[#F7F7F8] border border-[#E4E8EB] text-sm font-medium text-[#374151] hover:bg-white transition-colors disabled:opacity-60"
-                  disabled={isPending}
+                  disabled={isCreatingConsultation}
                 >
                   + Agregar medicamento
                 </button>
@@ -367,23 +431,23 @@ export default function ConsultationForm() {
                 type="button"
                 onClick={() => window.history.back()}
                 className="px-5 py-2 rounded-lg bg-[#F7F7F8] border border-[#E4E8EB] text-sm font-medium text-[#374151] hover:bg-white transition-colors disabled:opacity-60"
-                disabled={isPending}
+                disabled={isCreatingConsultation}
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 className="px-6 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                disabled={isPending}
+                disabled={isCreatingConsultation}
               >
-                {isPending ? 'Guardando…' : 'Guardar consulta'}
+                {isCreatingConsultation ? 'Guardando…' : 'Guardar consulta'}
               </button>
             </div>
           </div>
         </form>
       )}
 
-      {/* 🔹 Diagnóstico (estructurado) */}
+      {/* Diagnóstico (estructurado) */}
       {activeTab === 'diagnostico' && (
         <div className="max-w-4xl">
           <div className="bg-white border border-[#E4E8EB] rounded-xl shadow-sm p-6 space-y-4 text-sm">
@@ -476,21 +540,18 @@ export default function ConsultationForm() {
                   disabled={!canSaveDx || createDiagnosis.isPending}
                   onClick={() => {
                     if (!consultationId) return;
+                    // ¡Importante! No enviar id local del front
                     createDiagnosis.mutate(
                       {
                         consultationId,
-                        items: dxItems.map(({ ...rest }) => rest), // quitamos el id local
+                        items: dxItems.map(({ ...rest }) => rest),
                       },
                       {
-                        onSuccess: () => {
-                          // feedback simple y avanzar
-                          setActiveTab('ordenes');
-                        },
-                        onError: (e) => {
+                        onSuccess: () => setActiveTab('ordenes'),
+                        onError: (e) =>
                           alert(
                             e.message || 'No se pudo guardar el diagnóstico',
-                          );
-                        },
+                          ),
                       },
                     );
                   }}
@@ -505,81 +566,143 @@ export default function ConsultationForm() {
           </div>
         </div>
       )}
+
       {/* Órdenes */}
       {activeTab === 'ordenes' && (
         <div className="max-w-4xl">
           <div className="bg-white border border-[#E4E8EB] rounded-xl shadow-sm p-6 space-y-4 text-sm">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-              <select
-                value={orderDraft.type}
-                onChange={(e) =>
-                  setOrderDraft((o) => ({ ...o, type: e.target.value as any }))
-                }
-                className={inputClass}
-              >
-                <option value="lab">Laboratorio</option>
-                <option value="imaging">Imágenes</option>
-              </select>
-              <input
-                placeholder="Código (opcional)"
-                value={orderDraft.code ?? ''}
-                onChange={(e) =>
-                  setOrderDraft((o) => ({ ...o, code: e.target.value }))
-                }
-                className={inputClass}
-              />
-              <input
-                placeholder="Nombre del estudio"
-                value={orderDraft.label}
-                onChange={(e) =>
-                  setOrderDraft((o) => ({ ...o, label: e.target.value }))
-                }
-                className={inputClass}
-              />
-              <select
-                value={orderDraft.priority ?? ''}
-                onChange={(e) =>
-                  setOrderDraft((o) => ({
-                    ...o,
-                    priority: e.target.value as any,
-                  }))
-                }
-                className={inputClass}
-              >
-                <option value="">Prioridad</option>
-                <option value="normal">Normal</option>
-                <option value="urgent">Urgente</option>
-              </select>
+            {!consultationId && (
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs text-yellow-800">
+                Primero guarda la <strong>Consulta</strong> para generar el ID
+                de consulta.
+              </div>
+            )}
+
+            {/* Lista editable al estilo "Recetas" */}
+            <div className="space-y-2">
+              {orders.map((o, idx) => (
+                <div
+                  key={o.id}
+                  className="grid grid-cols-1 md:grid-cols-5 gap-2 items-start"
+                >
+                  {/* Tipo */}
+                  <select
+                    value={o.type}
+                    onChange={(e) =>
+                      updateOrderField(
+                        idx,
+                        'type',
+                        e.target.value as 'lab' | 'imaging',
+                      )
+                    }
+                    className={inputClass}
+                  >
+                    <option value="lab">Laboratorio</option>
+                    <option value="imaging">Imágenes</option>
+                  </select>
+
+                  {/* Código (opcional) */}
+                  <input
+                    placeholder="Código"
+                    value={o.code ?? ''}
+                    onChange={(e) =>
+                      updateOrderField(idx, 'code', e.target.value)
+                    }
+                    className={inputClass}
+                  />
+
+                  {/* Nombre del estudio */}
+                  <input
+                    placeholder="Nombre del estudio*"
+                    value={o.label}
+                    onChange={(e) =>
+                      updateOrderField(idx, 'label', e.target.value)
+                    }
+                    required
+                    className={inputClass}
+                  />
+
+                  {/* Prioridad */}
+                  <select
+                    value={o.priority ?? 'normal'}
+                    onChange={(e) =>
+                      updateOrderField(
+                        idx,
+                        'priority',
+                        e.target.value as 'normal' | 'urgent',
+                      )
+                    }
+                    className={inputClass}
+                  >
+                    <option value="normal">Prioridad: Normal</option>
+                    <option value="urgent">Prioridad: Urgente</option>
+                  </select>
+
+                  {/* Notas */}
+                  <input
+                    placeholder="Notas (opcional)"
+                    value={o.notes ?? ''}
+                    onChange={(e) =>
+                      updateOrderField(idx, 'notes', e.target.value)
+                    }
+                    className={inputClass}
+                  />
+
+                  {/* Acciones por fila */}
+                  <div className="md:col-span-5">
+                    {orders.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeOrderRow(o.id)}
+                        className="mt-1 px-3 py-1 rounded bg-[#F7F7F8] border border-[#E4E8EB] text-[#374151] text-xs hover:bg-white transition-colors"
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-            <textarea
-              placeholder="Notas para el laboratorio"
-              value={orderDraft.notes ?? ''}
-              onChange={(e) =>
-                setOrderDraft((o) => ({ ...o, notes: e.target.value }))
-              }
-              rows={3}
-              className={inputClass}
-            />
-            <div className="flex gap-2">
+
+            {/* Acciones de lista */}
+            <div className="flex items-center justify-between pt-2">
               <button
                 type="button"
-                onClick={() => setOrders((os) => [...os, orderDraft])}
-                disabled={!orderDraft.label.trim()}
-                className="px-4 py-2 rounded-lg bg-[#F7F7F8] border border-[#E4E8EB] text-sm font-medium text-[#374151] hover:bg-white transition-colors disabled:opacity-60"
+                onClick={addOrderRow}
+                className="px-4 py-2 rounded-lg bg-[#F7F7F8] border border-[#E4E8EB] text-sm font-medium text-[#374151] hover:bg-white transition-colors"
               >
                 + Agregar orden
               </button>
+
               <button
-                disabled={!consultationId || orders.length === 0}
-                onClick={() =>
-                  createOrders.mutate({
-                    consultationId: consultationId!, // prisma: MedicalOrder.consultationId
-                    orders,
-                  })
-                }
-                className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition disabled:opacity-60"
+                type="button"
+                disabled={!canSaveOrders || createOrders.isPending}
+                onClick={() => {
+                  if (!consultationId) return;
+                  // Enviamos TODAS las órdenes de la tabla (no limpiamos nada)
+                  createOrders.mutate(
+                    {
+                      consultationId,
+                      orders: orders.map(({ ...o }) => ({
+                        type: o.type,
+                        code: o.code || undefined,
+                        label: o.label,
+                        priority: o.priority ?? 'normal',
+                        notes: o.notes || undefined,
+                      })),
+                    },
+                    {
+                      onSuccess: () => setActiveTab('resumen'),
+                      onError: (e) =>
+                        alert(
+                          e.message || 'No se pudieron guardar las órdenes.',
+                        ),
+                    },
+                  );
+                }}
+                className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition-colors disabled:opacity-60"
               >
-                Guardar órdenes
+                {createOrders.isPending ? 'Guardando…' : 'Guardar órdenes'}
               </button>
             </div>
           </div>
@@ -589,14 +712,247 @@ export default function ConsultationForm() {
       {/* Resumen (placeholder hasta conectar queries) */}
       {activeTab === 'resumen' && (
         <div className="max-w-4xl">
-          <div className="bg-white border border-[#E4E8EB] rounded-xl shadow-sm p-6 space-y-4 text-sm">
-            <p className="text-[#374151]">
-              Aquí mostrarás: Motivo, Plan, Recetas, Diagnósticos estructurados
-              y Órdenes.
-            </p>
-            <p className="text-xs text-gray-500">
-              Luego conectamos queries para traer datos reales.
-            </p>
+          <div className="bg-white border border-[#E4E8EB] rounded-xl shadow-sm p-6 space-y-6 text-sm">
+            {!consultationId && (
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2 text-xs text-yellow-800">
+                Primero guarda la <strong>Consulta</strong> para generar el ID y
+                ver el resumen.
+              </div>
+            )}
+
+            {consultationId && summary.isLoading && (
+              <div className="text-sm text-gray-500">Cargando resumen…</div>
+            )}
+
+            {consultationId && summary.error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+                <p className="font-semibold mb-1">
+                  No se pudo cargar el resumen
+                </p>
+                <p>{(summary.error as any)?.message ?? 'Error desconocido'}</p>
+              </div>
+            )}
+
+            {consultationId && summary.data && (
+              <>
+                {/* Encabezado */}
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-[#111827]">
+                      Resumen de atención
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Consulta #{summary.data.id} · {fmt(summary.data.date)}
+                    </p>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {summary.data.appointment?.specialty?.name ? (
+                      <>
+                        Especialidad:{' '}
+                        <span className="font-medium text-[#374151]">
+                          {summary.data.appointment.specialty.name}
+                        </span>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Paciente / Doctor */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-[#F7F7F8] border border-[#E4E8EB] rounded-xl p-4">
+                    <p className="text-xs text-gray-500 mb-1">Paciente</p>
+                    <p className="text-sm font-medium text-[#374151]">
+                      {summary.data.patient?.user?.name}{' '}
+                      {summary.data.patient?.user?.lastName}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {summary.data.patient?.user?.email ?? '—'}
+                    </p>
+                  </div>
+                  <div className="bg-[#F7F7F8] border border-[#E4E8EB] rounded-xl p-4">
+                    <p className="text-xs text-gray-500 mb-1">Médico</p>
+                    <p className="text-sm font-medium text-[#374151]">
+                      {summary.data.doctor?.user?.name}{' '}
+                      {summary.data.doctor?.user?.lastName}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {summary.data.doctor?.user?.email ?? '—'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Motivo / Plan / Notas */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-1">
+                    <p className="text-xs text-gray-500 mb-1">Motivo</p>
+                    <div className="bg-white border border-[#E4E8EB] rounded-xl p-3">
+                      <p className="text-sm text-[#374151] whitespace-pre-wrap">
+                        {summary.data.reason || '—'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <p className="text-xs text-gray-500 mb-1">Plan</p>
+                    <div className="bg-white border border-[#E4E8EB] rounded-xl p-3">
+                      <p className="text-sm text-[#374151] whitespace-pre-wrap">
+                        {summary.data.plan || '—'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <p className="text-xs text-gray-500 mb-1">Notas</p>
+                    <div className="bg-white border border-[#E4E8EB] rounded-xl p-3">
+                      <p className="text-sm text-[#374151] whitespace-pre-wrap">
+                        {summary.data.notes || '—'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Diagnóstico estructurado */}
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Diagnóstico(s) estructurado(s)
+                  </p>
+                  {summary.data.consultationDiagnosis?.length ? (
+                    <div className="space-y-2">
+                      {summary.data.consultationDiagnosis.map((d) => (
+                        <div
+                          key={d.id}
+                          className="bg-[#F7F7F8] border border-[#E4E8EB] rounded-xl p-3"
+                        >
+                          <p className="text-sm text-[#111827] font-medium">
+                            {d.label}{' '}
+                            {d.code ? (
+                              <span className="text-gray-500 font-normal">
+                                ({d.code})
+                              </span>
+                            ) : null}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {d.severity ? `Severidad: ${d.severity}` : '—'}
+                            {d.notes ? ` · Notas: ${d.notes}` : ''}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      Sin diagnósticos estructurados.
+                    </p>
+                  )}
+                </div>
+
+                {/* Indicaciones */}
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Indicaciones</p>
+                  {summary.data.indications?.length ? (
+                    <ul className="space-y-2">
+                      {summary.data.indications.map((i) => (
+                        <li
+                          key={i.id}
+                          className="bg-[#F7F7F8] border border-[#E4E8EB] rounded-xl p-3"
+                        >
+                          <p className="text-sm text-[#374151]">
+                            {i.instruction}
+                          </p>
+                          {i.notes && (
+                            <p className="text-xs text-gray-500">
+                              Notas: {i.notes}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      Sin indicaciones registradas.
+                    </p>
+                  )}
+                </div>
+
+                {/* Recetas */}
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Recetas</p>
+                  {summary.data.prescriptions?.length ? (
+                    <div className="space-y-2">
+                      {summary.data.prescriptions.map((rx) => (
+                        <div
+                          key={rx.id}
+                          className="bg-[#F7F7F8] border border-[#E4E8EB] rounded-xl p-3"
+                        >
+                          <p className="text-sm text-[#111827] font-medium">
+                            {rx.medication}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {[
+                              rx.dosage && `Dosis: ${rx.dosage}`,
+                              rx.frequency && `Frec.: ${rx.frequency}`,
+                              rx.duration && `Duración: ${rx.duration}`,
+                              rx.route && `Vía: ${rx.route}`,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </p>
+                          {rx.dispensed && (
+                            <p className="text-xs text-green-700 mt-1">
+                              Dispensado {fmt(rx.dispensedAt)}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">Sin recetas.</p>
+                  )}
+                </div>
+
+                {/* Órdenes médicas */}
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Órdenes médicas</p>
+                  {summary.data.medicalOrders?.length ? (
+                    <div className="space-y-2">
+                      {summary.data.medicalOrders.map((o) => (
+                        <div
+                          key={o.id}
+                          className="bg-[#F7F7F8] border border-[#E4E8EB] rounded-xl p-3"
+                        >
+                          <p className="text-sm text-[#111827] font-medium">
+                            {o.area === 'laboratory'
+                              ? 'Laboratorio'
+                              : 'Imágenes'}{' '}
+                            · {o.description}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Estado: {o.status}
+                            {o.priority ? ` · Prioridad: ${o.priority}` : ''}
+                          </p>
+                          {o.results && (
+                            <p className="text-xs text-[#374151] mt-1 whitespace-pre-wrap">
+                              Resultado: {o.results}
+                            </p>
+                          )}
+                          {o.resultFile && (
+                            <a
+                              href={o.resultFile}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-[#2563EB] hover:text-[#1D4ED8] underline mt-1 inline-block"
+                            >
+                              Ver archivo adjunto
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      Sin órdenes creadas.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -606,7 +962,7 @@ export default function ConsultationForm() {
         <div className="flex justify-end gap-2">
           <button
             onClick={() =>
-              saveDraft.mutate?.({ consultationId, partial: buildPayload() })
+              saveDraft.mutate({ consultationId, partial: buildPayload() })
             }
             className="px-4 py-2 rounded-lg bg-[#F7F7F8] border border-[#E4E8EB] text-sm font-medium text-[#374151] hover:bg-white transition-colors"
           >
@@ -616,9 +972,9 @@ export default function ConsultationForm() {
             disabled={!consultationId || closeConsultation.isPending}
             onClick={() =>
               closeConsultation.mutate({
-                consultationId: consultationId!, // prisma: Consultation.status -> completed, closedAt now
+                consultationId: consultationId!, // Consultation.status -> completed, closedAt now
                 completeAppointment:
-                  typeof appointmentId === 'string' ? appointmentId : undefined, // opcional
+                  typeof appointmentId === 'string' ? appointmentId : undefined,
               })
             }
             className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition-colors disabled:opacity-60"
