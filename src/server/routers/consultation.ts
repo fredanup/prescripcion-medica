@@ -51,8 +51,10 @@ export const consultationRouter = createTRPCRouter({
           message: 'No se encontró el ID del doctor en la sesión',
         });
       }
-
+      
       try {
+
+        
         // 1) Verificar cita
         const appointment = await ctx.prisma.appointment.findUnique({
           where: { id: input.appointmentId },
@@ -69,46 +71,79 @@ export const consultationRouter = createTRPCRouter({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'La cita pertenece a otro doctor' });
         }
 
-        // 2) Crear consulta y relaciones
-        const created = await ctx.prisma.consultation.create({
+        // 2) ¿Ya existe consulta para esta cita?
+        const existing = await ctx.prisma.consultation.findFirst({
+          where: { appointmentId: appointment.id, doctorId },
+          select: { id: true },
+        });
+
+        if(!existing){
+          // 2) Crear consulta y relaciones
+          const created = await ctx.prisma.consultation.create({
+            data: {
+              appointmentId: appointment.id,
+              patientId: appointment.patientId,
+              doctorId,
+              reason: input.reason,
+              diagnosis: input.diagnosis ?? null,
+              plan: input.plan ?? '',
+              notes: input.notes ?? null,
+              // status por default = in_progress (según schema propuesto)
+              indications: {
+                create: input.indications.map((ind) => ({
+                  instruction: ind.instruction,
+                  notes: ind.notes ?? null,
+                })),
+              },
+              prescriptions: {
+                create: input.prescriptions.map((rx) => ({
+                  medication: rx.medication,
+                  dosage: rx.dosage ?? '',
+                  frequency: rx.frequency ?? '',
+                  duration: rx.duration ?? '',
+                  route: rx.route ?? '',
+                })),
+              },
+            },
+            select: { id: true },
+          });
+
+          return created; 
+        }
+        await ctx.prisma.$transaction(async (tx) => {
+        await tx.medicalIndication.deleteMany({ where: { consultationId: existing.id } });
+        await tx.medicationPrescription.deleteMany({ where: { consultationId: existing.id } });
+
+        // actualizar campos base + volver a crear arrays
+        await tx.consultation.update({
+          where: { id: existing.id },
           data: {
-            appointmentId: appointment.id,
-            patientId: appointment.patientId,
-            doctorId,
             reason: input.reason,
             diagnosis: input.diagnosis ?? null,
             plan: input.plan ?? '',
             notes: input.notes ?? null,
-            // status por default = in_progress (según schema propuesto)
             indications: {
-              create: input.indications.map((ind) => ({
-                instruction: ind.instruction,
-                notes: ind.notes ?? null,
-              })),
+              create: input.indications.map(i => ({ instruction: i.instruction, notes: i.notes ?? null })),
             },
             prescriptions: {
-              create: input.prescriptions.map((rx) => ({
-                medication: rx.medication,
-                dosage: rx.dosage ?? '',
-                frequency: rx.frequency ?? '',
-                duration: rx.duration ?? '',
-                route: rx.route ?? '',
-              })),
+              createMany: {
+                data: input.prescriptions.map(rx => ({
+                  medication: rx.medication,
+                  dosage: rx.dosage ?? '',
+                  frequency: rx.frequency ?? '',
+                  duration: rx.duration ?? '',
+                  route: rx.route ?? '',
+                })),
+                skipDuplicates: true,
+              },
             },
           },
-          select: { id: true },
         });
 
-        // 👇 Ya NO cerramos la cita aquí. El cierre pasa en `close`.
-        // Si quieres, puedes mover a 'confirmed' si venía de pending_payment:
-        // if (appointment.status === 'pending_payment') {
-        //   await ctx.prisma.appointment.update({
-        //     where: { id: appointment.id },
-        //     data: { status: 'confirmed' },
-        //   });
-        // }
+        return { id: existing.id };
+      });
+        
 
-        return created; // { id }
       } catch (error) {
         console.error('[consultationRouter.create] Error al crear consulta:', error);
         throw new TRPCError({
@@ -116,6 +151,7 @@ export const consultationRouter = createTRPCRouter({
           message: 'Error al crear la consulta. Por favor, inténtelo de nuevo más tarde.',
         });
       }
+      
     }),
 
   /**
@@ -147,18 +183,18 @@ export const consultationRouter = createTRPCRouter({
       if (!owns) throw new TRPCError({ code: 'FORBIDDEN', message: 'No autorizado' });
 
         // Limpia y vuelve a crear (idempotente simple)
-      await ctx.prisma.consultationDiagnosis.deleteMany({
-        where: { consultationId: input.consultationId }
-      });
-
-      await ctx.prisma.consultationDiagnosis.createMany({
-        data: input.items.map((d) => ({
-          consultationId: input.consultationId,
-          code: d.code ?? null,
-          label: d.label,
-          severity: d.severity ?? null,
-          notes: d.notes ?? null,
-        })),
+     await ctx.prisma.$transaction(async (tx) => {
+        await tx.consultationDiagnosis.deleteMany({ where: { consultationId: input.consultationId } });
+        await tx.consultationDiagnosis.createMany({
+          data: input.items.map(d => ({
+            consultationId: input.consultationId,
+            code: d.code ?? null,
+            label: d.label,
+            severity: d.severity ?? null,
+            notes: d.notes ?? null,
+          })),
+          skipDuplicates: true, // efectivo con @@unique([consultationId, label, code])
+        });
       });
 
       return { ok: true };
@@ -192,19 +228,24 @@ export const consultationRouter = createTRPCRouter({
       });
       if (!c) throw new TRPCError({ code: 'FORBIDDEN', message: 'No autorizado' });
 
-      await ctx.prisma.medicalOrder.createMany({
-        data: input.orders.map((o) => ({
-          consultationId: input.consultationId,
-          patientId: c.patientId,
-          doctorId: c.doctorId,
-          area: o.type === 'lab' ? 'laboratory' : 'imaging',
-          description: [o.label, o.code ? `(${o.code})` : '', o.notes ? `- ${o.notes}` : ''].filter(Boolean).join(' '),
-          status: 'pending',                         // enum en Prisma
-          priority: o.priority ?? 'normal',          // enum en Prisma
-          results: null,
-          resultFile: null,
-        })),
+      await ctx.prisma.$transaction(async (tx) => {
+        await tx.medicalOrder.deleteMany({ where: { consultationId: c.id } });
+        await ctx.prisma.medicalOrder.createMany({
+          data: input.orders.map((o) => ({
+            consultationId: input.consultationId,
+            patientId: c.patientId,
+            doctorId: c.doctorId,
+            area: o.type === 'lab' ? 'laboratory' : 'imaging',
+            description: [o.label, o.code ? `(${o.code})` : '', o.notes ? `- ${o.notes}` : ''].filter(Boolean).join(' '),
+            status: 'pending',                         // enum en Prisma
+            priority: o.priority ?? 'normal',          // enum en Prisma
+            results: null,
+            resultFile: null,
+            })),
+            skipDuplicates: true,
+          })
       });
+
 
       // (opcional) notificar a laboratorio
       return { ok: true };
@@ -298,4 +339,6 @@ export const consultationRouter = createTRPCRouter({
 
       return data;
     }),
+
+    
 });

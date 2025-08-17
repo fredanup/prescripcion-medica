@@ -113,9 +113,18 @@ model User {
   LaboratoryStaff LaboratoryStaff?
 }
 
+// Definición de enum
+enum RoleType {
+  admin
+  doctor
+  patient
+  pharmacist
+  staff
+}
+
 model Role {
-  id          String  @id @default(cuid())
-  name        String  @unique
+  id          String   @id @default(cuid())
+  name        RoleType @unique
   description String?
 
   users UserRole[]
@@ -240,7 +249,7 @@ model Consultation {
   patient       Patient      @relation(fields: [patientId], references: [id])
   doctorId      String
   doctor        Doctor       @relation(fields: [doctorId], references: [id])
-  appointmentId String? // Relación opcional con Appointment
+  appointmentId String?      @unique // Relación opcional con Appointment
   appointment   Appointment? @relation(fields: [appointmentId], references: [id])
 
   date          DateTime                 @default(now())
@@ -266,6 +275,8 @@ model ConsultationDiagnosis {
   severity       String?
   notes          String?
   createdAt      DateTime     @default(now())
+
+  @@unique([consultationId, code, label])
 }
 
 model MedicalIndication {
@@ -279,7 +290,7 @@ model MedicalIndication {
 model MedicationPrescription {
   id             String       @id @default(cuid())
   consultationId String
-  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
 
   medication  String // Paracetamol
   dosage      String // 500mg
@@ -288,6 +299,8 @@ model MedicationPrescription {
   route       String
   dispensed   Boolean   @default(false)
   dispensedAt DateTime?
+
+  @@unique([consultationId, medication, dosage, frequency, duration, route])
 }
 
 enum MedicalOrderStatus {
@@ -321,6 +334,8 @@ model MedicalOrder {
   resultFile  String? // (opcional) URL a PDF/imágenes
   dispensedAt DateTime? // (si aplica a farmacia)
   createdAt   DateTime             @default(now())
+
+  @@unique([consultationId, area, description])
 }
 
 model Allergy {
