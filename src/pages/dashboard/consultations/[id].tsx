@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 import { trpc } from 'utils/trpc';
 import Layout from 'utilities/layout';
 import FormTitle from 'utilities/form-title';
+import { Toast } from 'utilities/toast';
+import { BlockingLoader } from 'utilities/bloackingLoader';
 
 type Prescription = {
   medication: string;
@@ -35,6 +37,7 @@ const makeId = () =>
 
 export default function ConsultationForm() {
   const router = useRouter();
+
   const { id: appointmentId } = router.query;
 
   const utils = trpc.useContext();
@@ -86,6 +89,13 @@ export default function ConsultationForm() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([
     { medication: '', dosage: '', frequency: '', duration: '', route: '' },
   ]);
+
+  // arriba, junto con otros useState
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>(
+    'success',
+  );
+  const [toastMsg, setToastMsg] = useState('');
 
   // Estado para nuevos tabs
   const [dxItems, setDxItems] = useState<DiagnosisItem[]>([]);
@@ -971,18 +981,68 @@ export default function ConsultationForm() {
           <button
             disabled={!consultationId || closeConsultation.isPending}
             onClick={() =>
-              closeConsultation.mutate({
-                consultationId: consultationId!, // Consultation.status -> completed, closedAt now
-                completeAppointment:
-                  typeof appointmentId === 'string' ? appointmentId : undefined,
-              })
+              closeConsultation.mutate(
+                {
+                  consultationId: consultationId!,
+                  completeAppointment:
+                    typeof appointmentId === 'string'
+                      ? appointmentId
+                      : undefined,
+                },
+                {
+                  onSuccess: async () => {
+                    // 1) Invalida el resumen y/o listados relevantes
+                    await Promise.allSettled([
+                      utils.consultation.getSummary.invalidate({
+                        consultationId: consultationId!,
+                      }),
+                      utils.appointment.findDoctorAppointmentsByDate.invalidate(),
+                      utils.appointment.findMyAppointments.invalidate(),
+                    ]);
+
+                    // 2) Toast y transición
+                    setToastType('success');
+                    setToastMsg('Atención cerrada correctamente.');
+                    setToastOpen(true);
+
+                    // 3) Opciones de navegación:
+                    // a) volver a “Resumen” y forzar refetch visible:
+                    // setActiveTab('resumen');
+                    // si tienes summary hook:
+                    // summary.refetch?.();
+
+                    // b) O navegar a /dashboard/callings (descomenta si prefieres salir)
+                    setTimeout(() => {
+                      router.push('/dashboard/callings'); // o la ruta de tu agenda
+                    }, 1500);
+                  },
+                  onError: (e) => {
+                    setToastType('error');
+                    setToastMsg(e.message || 'No se pudo cerrar la atención.');
+                    setToastOpen(true);
+                  },
+                },
+              )
             }
             className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition-colors disabled:opacity-60"
           >
-            Cerrar atención
+            {closeConsultation.isPending ? 'Cerrando…' : 'Cerrar atención'}
           </button>
         </div>
       </div>
+      {/* Overlay cuando cierra */}
+      <BlockingLoader
+        show={closeConsultation.isPending}
+        text="Cerrando atención…"
+      />
+
+      {/* Toast */}
+      <Toast
+        open={toastOpen}
+        type={toastType}
+        message={toastMsg}
+        onClose={() => setToastOpen(false)}
+      />
     </Layout>
   );
 }
