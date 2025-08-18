@@ -3,6 +3,7 @@ import Layout from 'utilities/layout';
 import FormTitle from 'utilities/form-title';
 import Image from 'next/image';
 import { trpc } from 'utils/trpc';
+import { getOrderStatusLabel } from 'utils/orderStatusLabel';
 
 // —— estilos
 const box = 'bg-white border border-[#E4E8EB] rounded-xl shadow-sm';
@@ -261,7 +262,9 @@ function TimelineCard({ item }: { item: Item }) {
         </span>{' '}
         — {o.description}
       </p>
-      <p className="text-xs text-gray-500">Estado: {o.status}</p>
+      <p className="text-xs text-gray-500">
+        Estado: {getOrderStatusLabel(o.status)}
+      </p>
       {o.results && (
         <p className="text-sm text-[#374151] mt-1">
           <span className="font-medium">Resultado:</span> {o.results}
