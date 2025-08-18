@@ -73,33 +73,103 @@ findUnique: protectedProcedure.query(async ({ ctx }) => {
     return users;
   }),
   //Listar a los usuarios con su sucursal adjunta
-  findPatients: protectedProcedure.query(async ({ctx}) => {
-    const users = await ctx.prisma.user.findMany({
-      where: {
-        UserRole: {
-          some: {
-            role: {
-              name: 'patient',
+findMyClients: protectedProcedure.query(async ({ ctx }) => {
+  const doctorId = ctx.session?.user?.doctorId;
+  if (!doctorId) {
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Solo para médicos' });
+  }
+
+  const patients = await ctx.prisma.patient.findMany({
+    where: {
+      OR: [
+        // (b) pagaron cita contigo (o la cita quedó completada)
+        {
+          Appointment: {
+            some: {
+              doctorId,
+              OR: [
+                { paidAt: { not: null } },
+                { status: 'completed' }, // por si hay casos sin paidAt pero atendidos
+              ],
             },
           },
         },
+        // (a) tuvieron al menos una consulta contigo
+        {
+          consultations: {
+            some: { doctorId },
+          },
+        },
+      ],
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+          image: true,
+          email: true,
+          branchId: true,
+          Branch: true,
+          createdAt: true,
+        },
       },
-      select:{
-        id:true,
-        name:true,
-        lastName:true,
-        image:true,
-        email:true,
-    
-        branchId:true,
-        Branch:true
+      // Trae la última cita pagada/completada con este médico (para mostrar detalle)
+      Appointment: {
+        where: {
+          doctorId,
+          OR: [
+            { paidAt: { not: null } },
+            { status: 'completed' },
+          ],
+        },
+        orderBy: [{ paidAt: 'desc' }, { date: 'desc' }],
+        take: 1,
+        select: {
+          id: true,
+          date: true,
+          paidAt: true,
+          status: true,
+          specialty: { select: { name: true, price: true } },
+        },
       },
-      orderBy:{
-        createdAt:'asc'
-      }
-    });
-    return users;
-  }),
+      // Trae la última consulta contigo (para “último contacto”)
+      consultations: {
+        where: { doctorId },
+        orderBy: { date: 'desc' },
+        take: 1,
+        select: { id: true, date: true },
+      },
+    },
+    orderBy: { user: { name: 'asc' } }, // o por último contacto si prefieres
+  });
+
+  // Normaliza a un shape “cliente” único
+  return patients.map((p) => {
+    const lastPaidAppointment = p.Appointment[0] ?? null;
+    const lastConsultation = p.consultations[0] ?? null;
+    const lastInteractionAt = new Date(
+      Math.max(
+        lastPaidAppointment?.date?.getTime() ?? 0,
+        lastConsultation?.date?.getTime() ?? 0,
+      ),
+    );
+
+    return {
+      id: p.user.id,
+      name: p.user.name,
+      lastName: p.user.lastName,
+      image: p.user.image,
+      email: p.user.email,
+      branchId: p.user.branchId,
+      Branch: p.user.Branch,
+      lastPaidAppointment,
+      lastConsultation,
+      lastInteractionAt,
+    };
+  });
+}),
 
 findOne: publicProcedure.input(z.string()).query(async ({ input }) => {
   const user = await prisma.user.findUnique({
@@ -187,7 +257,7 @@ updateUser: protectedProcedure
         const foundRoles = await ctx.prisma.role.findMany({
           where: {
             name: {
-              in: roles,
+              in: roles as any, // Cast to 'any' if RoleType is an enum and roles is string[]
             },
           },
         });

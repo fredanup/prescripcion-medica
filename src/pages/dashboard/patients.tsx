@@ -44,7 +44,7 @@ function Avatar({ user }: { user: Patient }) {
 export default function Patients() {
   const { data: session, status } = useSession();
 
-  const { data: patients, isLoading } = trpc.user.findPatients.useQuery(
+  const { data: patients, isLoading } = trpc.user.findMyClients.useQuery(
     undefined,
     {
       enabled: status === 'authenticated',
