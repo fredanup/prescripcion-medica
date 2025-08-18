@@ -1,7 +1,8 @@
 // src/server/routers/consultationRouter.ts
 import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from 'server/trpc';
+import { createTRPCRouter, protectedProcedure, publicProcedure } from 'server/trpc';
 import { TRPCError } from '@trpc/server';
+import jwt from 'jsonwebtoken';
 
 const SeverityEnum = z.enum(['mild', 'moderate', 'severe']);
 const OrderTypeEnum = z.enum(['lab', 'imaging']);          // mapea a MedicalOrderType (laboratory | imaging)
@@ -339,6 +340,71 @@ export const consultationRouter = createTRPCRouter({
 
       return data;
     }),
+  deliver: publicProcedure
+    .input(z.object({ consultationId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const consultation = await ctx.prisma.consultation.findUnique({
+        where: { id: input.consultationId },
+       include: {
+          patient: { include: { user: true } },
+          doctor:  { include: { user: true } },
+          indications: true,
+          prescriptions: true,
+          appointment: { include: { specialty: true } },
+        },
+      });
 
-    
+      if (!consultation) throw new Error("Consulta no encontrada");
+      if (!consultation.patient?.user?.email) throw new Error("Paciente sin email");
+
+      // generar PDF como Buffer (con helper que tú defines usando PDFKit)
+      const pdfBuffer = await ctx.pdfs.prescription(consultation);
+
+      // enviar email al paciente
+      await ctx.mailer.send({
+        to: consultation.patient.user.email,
+        subject: "Indicaciones y Prescripción",
+        html: `
+          <p>Hola ${consultation.patient.user.name ?? ""},</p>
+          <p>Adjuntamos su <strong>prescripción médica</strong>.</p>
+        `,
+        text: "Adjuntamos su prescripción médica.",
+        attachments: [{ filename: "prescripcion.pdf", content: pdfBuffer }],
+      });
+
+      return { success: true };
+    }),
+    getPrescriptionBundle: publicProcedure
+    .input(z.object({ consultationId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const consultation = await ctx.prisma.consultation.findUnique({
+        where: { id: input.consultationId },
+        include: {
+          patient: { include: { user: true } },
+          prescriptions: true,
+        },
+      });
+
+      if (!consultation) throw new Error("Consulta no encontrada");
+
+      // firmamos un token para acceso público farmacia
+      const token = jwt.sign(
+        { consultationId: consultation.id },
+        process.env.SIGN_SECRET!,
+        { expiresIn: "7d" }
+      );
+
+      const url = `${process.env.APP_URL}/api/pdf/prescription?token=${token}`;
+
+      return {
+        consultationId: consultation.id,
+        patient: {
+          name: consultation.patient?.user?.name,
+          lastName: consultation.patient?.user?.lastName,
+        },
+        prescriptions: consultation.prescriptions,
+        url, // link directo
+        qrData: url, // el frontend puede generar un QR a partir de este string
+      };
+    }),
 });

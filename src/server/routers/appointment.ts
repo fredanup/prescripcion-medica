@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { sendEmailToDoctor } from "server/email/email";
+
 import { createTRPCRouter, protectedProcedure } from "server/trpc";
 import { z } from "zod";
 
@@ -88,10 +88,25 @@ export const appointmentRouter = createTRPCRouter({
       },
     });
 
-    // Simular envío de correo
-    await sendEmailToDoctor(appointment); // función aparte
+    const dateStr = appointment.date.toLocaleString('es-PE', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Lima',
+    });
 
-    return appointment;
+    await ctx.mailer.send({
+    to: appointment.doctor.user.email,
+    subject: 'Nueva cita confirmada',
+    html: `
+      <p>Hola Dr. ${appointment.doctor.user.name},</p>
+      <p>El paciente <strong>${appointment.patient.user.name} ${appointment.patient.user.lastName}</strong> 
+      ha reservado una cita para <strong>${appointment.specialty.name}</strong>.</p>
+      <p><strong>Fecha y hora:</strong> ${dateStr}</p>
+      <p>Por favor revise su agenda.</p>
+    `,
+    text: `Nueva cita confirmada para ${dateStr}`,
+  });
+
+    return {ok:true};
   }),
 
   findTakenSlots: protectedProcedure

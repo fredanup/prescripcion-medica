@@ -80,6 +80,17 @@ export default function ConsultationForm() {
     { enabled: !!consultationId },
   );
 
+  const {
+    data: bundle,
+    refetch: refetchBundle,
+    isFetching,
+  } = trpc.consultation.getPrescriptionBundle.useQuery(
+    { consultationId: consultationId ?? '' },
+    { enabled: !!consultationId },
+  );
+
+  const deliver = trpc.consultation.deliver.useMutation();
+
   // Estado original
   const [reason, setReason] = useState('');
   const [diagnosis, setDiagnosis] = useState(''); // libre (se mantiene)
@@ -964,6 +975,45 @@ export default function ConsultationForm() {
               </>
             )}
           </div>
+          <div className="bg-white border border-[#E4E8EB] rounded-xl shadow-sm p-6 space-y-4 text-sm mt-4">
+            <h4 className="text-sm font-semibold text-[#374151]">
+              Entrega al paciente
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Descargar / Imprimir PDF */}
+              <a
+                href={
+                  consultationId
+                    ? `/api/pdf/prescription?consultationId=${consultationId}`
+                    : '#'
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-xl bg-[#F7F7F8] border border-[#E4E8EB] text-center text-sm font-medium text-[#374151] hover:bg-white transition"
+              >
+                Descargar/Imprimir PDF
+              </a>
+
+              {/* Copiar link para farmacia */}
+              <button
+                onClick={async () => {
+                  const r = await refetchBundle();
+                  const url = r.data?.url ?? bundle?.url;
+                  if (url) {
+                    await navigator.clipboard.writeText(url);
+                    alert('Link copiado para farmacia');
+                  } else {
+                    alert('Generando link...intente de nuevo');
+                  }
+                }}
+                disabled={isFetching}
+                className="px-4 py-2 rounded-xl bg-[#F7F7F8] border border-[#E4E8EB] text-sm font-medium text-[#374151] hover:bg-white transition"
+              >
+                {isFetching ? 'Generando...' : 'Copiar link para farmacia'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -979,7 +1029,11 @@ export default function ConsultationForm() {
             Guardar borrador
           </button>
           <button
-            disabled={!consultationId || closeConsultation.isPending}
+            disabled={
+              !consultationId ||
+              closeConsultation.isPending ||
+              deliver.isPending
+            }
             onClick={() =>
               closeConsultation.mutate(
                 {
@@ -990,31 +1044,33 @@ export default function ConsultationForm() {
                       : undefined,
                 },
                 {
-                  onSuccess: async () => {
-                    // 1) Invalida el resumen y/o listados relevantes
-                    await Promise.allSettled([
-                      utils.consultation.getSummary.invalidate({
-                        consultationId: consultationId!,
-                      }),
-                      utils.appointment.findDoctorAppointmentsByDate.invalidate(),
-                      utils.appointment.findMyAppointments.invalidate(),
-                    ]);
-
-                    // 2) Toast y transición
+                  onSuccess: () => {
+                    // 1) Feedback inmediato y navegación
                     setToastType('success');
-                    setToastMsg('Atención cerrada correctamente.');
+                    setToastMsg(
+                      'Atención cerrada. Enviando correo en segundo plano…',
+                    );
                     setToastOpen(true);
+                    router.push('/dashboard/callings');
 
-                    // 3) Opciones de navegación:
-                    // a) volver a “Resumen” y forzar refetch visible:
-                    // setActiveTab('resumen');
-                    // si tienes summary hook:
-                    // summary.refetch?.();
+                    // 2) Invalidaciones SIN await (no bloquean la navegación)
+                    void utils.consultation.getSummary.invalidate({
+                      consultationId: consultationId!,
+                    });
+                    void utils.appointment.findDoctorAppointmentsByDate.invalidate();
+                    void utils.appointment.findMyAppointments.invalidate();
 
-                    // b) O navegar a /dashboard/callings (descomenta si prefieres salir)
-                    setTimeout(() => {
-                      router.push('/dashboard/callings'); // o la ruta de tu agenda
-                    }, 1500);
+                    // 3) Enviar correo "fire-and-forget"
+                    void deliver
+                      .mutateAsync({ consultationId: consultationId! })
+                      .catch((e: any) => {
+                        setToastType('error');
+                        setToastMsg(
+                          e?.message ??
+                            'La atención se cerró, pero falló el envío del correo.',
+                        );
+                        setToastOpen(true);
+                      });
                   },
                   onError: (e) => {
                     setToastType('error');
@@ -1026,7 +1082,9 @@ export default function ConsultationForm() {
             }
             className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition-colors disabled:opacity-60"
           >
-            {closeConsultation.isPending ? 'Cerrando…' : 'Cerrar atención'}
+            {closeConsultation.isPending || deliver.isPending
+              ? 'Procesando…'
+              : 'Cerrar atención'}
           </button>
         </div>
       </div>
