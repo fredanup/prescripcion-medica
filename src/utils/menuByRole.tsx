@@ -3,7 +3,6 @@ import {
   FileText,
   Settings,
   Calendar,
-  Stethoscope,
   Pill,
   Bell,
   FlaskConical,
@@ -20,7 +19,6 @@ export const menuByRole = {
   doctor: [
     { label: 'Agenda', path: '/dashboard/callings', icon: Calendar },
     { label: 'Pacientes', path: '/dashboard/patients', icon: User },
-    { label: 'Consultas', path: '/dashboard/consultations', icon: Stethoscope },
     { label: 'Órdenes Médicas', path: '/dashboard/orders', icon: FileText },
     { label: 'Historial Clínico', path: '/dashboard/records', icon: FileText },
   ],

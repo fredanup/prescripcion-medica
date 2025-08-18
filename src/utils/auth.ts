@@ -102,6 +102,36 @@ export const userBranchSchema = z.object({
     }),
   });
 
+  // --- NUEVO: esquemas de salida fuertemente tipados
+  export const ConsultationItemSchema = z.object({
+    kind: z.literal('consultation'),
+    id: z.string(),
+    date: z.date(),
+    data: z.any(), // aquí puedes reemplazar por el schema de tu consulta si lo tienes
+  });
+  
+  export const OrderItemSchema = z.object({
+    kind: z.literal('order'),
+    id: z.string(),
+    date: z.date(),
+    data: z.any(), // idem arriba
+  });
+  
+  export const ListMyPatientsOutput = z.array(z.object({
+  id: z.string(),
+  userId: z.string(),
+  name: z.string().nullable(),
+  lastName: z.string().nullable(),
+  image: z.string().nullable(),
+  email: z.string(),
+  lastContactAt: z.date().nullable(),
+}));
+export const TimelineOutputSchema = z.object({
+  items: z.array(z.discriminatedUnion('kind', [ConsultationItemSchema, OrderItemSchema])),
+  nextCursor: z.string().nullable(),
+});
+
+
   export type IUserBranch = z.infer<typeof userBranchSchema>;
   export type IEditUserBranch = z.infer<typeof editUserBranchSchema>;
   export type IBranch = z.infer<typeof branchSchema>;
@@ -112,3 +142,5 @@ export const userBranchSchema = z.object({
   export type IJobApplication=z.infer<typeof jobApplicationSchema>;
   export type IEditJobApplication=z.infer<typeof editJobApplicationSchema>;
   export type PaymentRequestBody = z.infer<typeof paymentSchema>;
+  export type IListMyPatientsOutput = z.infer<typeof ListMyPatientsOutput>;
+  export type ITimelineOutput = z.infer<typeof TimelineOutputSchema>;
