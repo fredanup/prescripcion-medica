@@ -1,7 +1,7 @@
 // src/server/routers/clinicalHistoryRouter.ts
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { createTRPCRouter, protectedProcedure } from 'server/trpc';
+import { createTRPCRouter, protectedProcedure } from '../../server/trpc';
 import { IListMyPatientsOutput, ITimelineOutput, ListMyPatientsOutput, TimelineOutputSchema } from 'utils/auth';
 import { Prisma } from '@prisma/client';
 

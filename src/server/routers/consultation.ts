@@ -1,6 +1,6 @@
 // src/server/routers/consultationRouter.ts
 import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure, publicProcedure } from 'server/trpc';
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '../../server/trpc';
 import { TRPCError } from '@trpc/server';
 import jwt from 'jsonwebtoken';
 

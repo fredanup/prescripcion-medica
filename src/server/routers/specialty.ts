@@ -1,4 +1,4 @@
-import { createTRPCRouter, protectedProcedure } from "server/trpc";
+import { createTRPCRouter, protectedProcedure } from "../../server/trpc";
 
 
 export const specialtyRouter = createTRPCRouter({
