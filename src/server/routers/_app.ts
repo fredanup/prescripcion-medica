@@ -9,7 +9,6 @@ import { userRouter } from './user';
 import { branchRouter } from './branch';
 import { documentRouter } from './document';
 import { callingRouter } from './calling';
-import { applicationRouter } from './application';
 import { authRouter } from './authRouter';
 import { roleRouter } from './role';
 import { appointmentRouter } from './appointment';
@@ -26,7 +25,6 @@ export const appRouter = createTRPCRouter({
   document: documentRouter,
   calling:callingRouter,
   post: postRouter,
-  application: applicationRouter,
   role: roleRouter,
   appointment: appointmentRouter,
   specialty: specialtyRouter,

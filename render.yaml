@@ -2,7 +2,7 @@
 # previewsExpireAfterDays: 7 # automatically delete the environment after the specified number of days of inactivity
 services:
   - type: web
-    name: pacific-security
+    name: prescripcion-medica
     env: node
     plan: free
     # NODE_ENV is development here in order for pnpm to install dev deps
@@ -17,10 +17,10 @@ services:
         value: production
       - key: DATABASE_URL
         fromDatabase:
-          name: pacific-security-db
+          name: prescripcion-medica-db
           property: connectionString
-      - fromGroup: pacific-security-env
+      - fromGroup: prescripcion-medica-env
 databases:
-  - name: pacific-security-db
-    plan: starter
+  - name: prescripcion-medica-db
+    plan: basic-256mb
     # plan: free
