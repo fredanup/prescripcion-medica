@@ -407,4 +407,21 @@ export const consultationRouter = createTRPCRouter({
         qrData: url, // el frontend puede generar un QR a partir de este string
       };
     }),
+    findPatientHistory: protectedProcedure.query(async ({ ctx }) => {
+    const patientId = ctx.session?.user?.patientId;
+    if (!patientId) throw new Error("No tienes rol de paciente");
+
+    const consultations = await ctx.prisma.consultation.findMany({
+      where: { patientId },
+      include: {
+        doctor: { include: { user: true, Specialty: true } },
+        indications: true,
+        prescriptions: true,
+        appointment: { include: { specialty: true } },
+      },
+      orderBy: { date: "desc" },
+    });
+
+    return consultations;
+  }),
 });

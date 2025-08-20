@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import { prisma } from 'server/prisma';
-import { getServerAuthSession } from 'server/auth';
+import { getServerAuthSession } from 'server/auth'; // o tu helper equivalente basado en getServerSession
 import { buildPrescriptionPdfBuffer } from 'server/pdfs';
 
 type TokenPayload = { consultationId: string };
@@ -16,11 +16,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let consultationId = cidFromQuery;
 
-    // Si viene token, lo validamos y extraemos el consultationId
-    let accessMode: 'public-token' | 'doctor-session' | null = null;
+    // 1) Intento con token público
+    let accessMode: 'public-token' | 'doctor-session' | 'patient-session' | null = null;
     if (token) {
       const secret = process.env.SIGN_SECRET;
       if (!secret) return res.status(500).end('Server misconfigured (SIGN_SECRET)');
+
       try {
         const payload = jwt.verify(token, secret) as TokenPayload;
         consultationId = payload.consultationId;
@@ -30,23 +31,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Si no hubo token, exigimos sesión de médico y consultationId en query
+    // 2) Si no hubo token, intentamos sesión (doctor o paciente)
     let doctorId: string | undefined;
+    let patientId: string | undefined;
+
     if (!accessMode) {
-      const session = await getServerAuthSession({ req, res });
-      doctorId = (session as any)?.user?.doctorId as string | undefined;
-      if (!doctorId) return res.status(401).end('Unauthorized');
-      accessMode = 'doctor-session';
+      const session = await getServerAuthSession({ req, res }); // ajusta al helper que uses
+      doctorId = (session as any)?.user?.doctorId ?? undefined;
+      patientId = (session as any)?.user?.patientId ?? undefined;
+
+      if (doctorId) accessMode = 'doctor-session';
+      else if (patientId) accessMode = 'patient-session';
+      else return res.status(401).end('Unauthorized');
     }
 
     if (!consultationId) return res.status(400).end('Missing consultationId');
 
-    // Filtro: si es sesión de médico, limitamos por doctorId; si es token, solo por id
+    // 3) Filtro por modo de acceso
+    const whereByMode =
+      accessMode === 'doctor-session'
+        ? { id: consultationId, doctorId } // debe ser el médico dueño
+        : accessMode === 'patient-session'
+        ? { id: consultationId, patientId } // debe ser el paciente dueño
+        : { id: consultationId }; // token público: sólo por id
+
     const c = await prisma.consultation.findFirst({
-      where:
-        accessMode === 'doctor-session'
-          ? { id: consultationId, doctorId }
-          : { id: consultationId },
+      where: whereByMode,
       include: {
         patient: { include: { user: true } },
         doctor: { include: { user: true } },
