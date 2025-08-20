@@ -14,26 +14,11 @@ export const menuByRole = {
     { label: 'Pacientes', path: '/dashboard/patients', icon: User },
     { label: 'Historial Clínico', path: '/dashboard/records', icon: FileText },
   ],
-  pharmacist: [
-    {
-      label: 'Recetas Pendientes',
-      path: '/dashboard/prescriptions',
-      icon: Pill,
-    },
-    {
-      label: 'Entregas Realizadas',
-      path: '/dashboard/deliveries',
-      icon: FileText,
-    },
-    { label: 'Inventario', path: '/dashboard/inventory', icon: FileText },
-    { label: 'Alertas de Stock', path: '/dashboard/stock-alerts', icon: Bell },
-  ],
   patient: [
     { label: 'Mi Perfil', path: '/dashboard/profile', icon: User },
     { label: 'Historial Clínico', path: '/dashboard/history', icon: FileText },
 
     { label: 'Citas', path: '/dashboard/appointments', icon: Calendar },
-    { label: 'Notificaciones', path: '/dashboard/notifications', icon: Bell },
   ],
   laboratory_staff: [
     {
@@ -56,5 +41,19 @@ export const menuByRole = {
       path: '/dashboard/lab-reports',
       icon: FileText,
     },
+  ],
+  pharmacist: [
+    {
+      label: 'Recetas Pendientes',
+      path: '/dashboard/prescriptions',
+      icon: Pill,
+    },
+    {
+      label: 'Entregas Realizadas',
+      path: '/dashboard/deliveries',
+      icon: FileText,
+    },
+    { label: 'Inventario', path: '/dashboard/inventory', icon: FileText },
+    { label: 'Alertas de Stock', path: '/dashboard/stock-alerts', icon: Bell },
   ],
 };
