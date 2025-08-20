@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
-import type { IBranch, IUserBranch } from 'utils/auth';
+import type { IBranch, IUserBranch } from '../../utils/auth';
 import { trpc } from 'utils/trpc';
 import CreateBranchModal from './create-branch-modal';
 import FormTitle from 'utilities/form-title';

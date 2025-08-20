@@ -2,7 +2,7 @@ import FormTitle from 'utilities/form-title';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { trpc } from 'utils/trpc';
-import { IBranch } from 'utils/auth';
+import { IBranch } from '../../utils/auth';
 
 export default function CreateBranchModal({
   isOpen,

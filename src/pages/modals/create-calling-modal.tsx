@@ -2,7 +2,7 @@ import FormTitle from 'utilities/form-title';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
-import type { IEditCalling } from 'utils/auth';
+import type { IEditCalling } from '../../utils/auth';
 import { trpc } from 'utils/trpc';
 import 'react-datepicker/dist/react-datepicker.css';
 

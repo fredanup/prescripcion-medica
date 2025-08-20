@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Script from 'next/script';
 import Spinner from 'utilities/spinner';
-import { PaymentRequestBody } from 'utils/auth';
+import { PaymentRequestBody } from '../../utils/auth';
 
 declare global {
   interface Window {

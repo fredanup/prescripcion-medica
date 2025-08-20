@@ -7,7 +7,7 @@ import UpdateUserModal from 'pages/modals/update-user-modal';
 import { useState } from 'react';
 import FormTitle from 'utilities/form-title';
 import Layout from 'utilities/layout';
-import type { IUserBranch } from 'utils/auth';
+import type { IUserBranch } from '../../utils/auth';
 import { getRoleLabel } from 'utils/roleLabel';
 
 import { trpc } from 'utils/trpc';

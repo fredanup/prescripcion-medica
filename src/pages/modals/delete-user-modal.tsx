@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import type { IUserBranch } from 'utils/auth';
+import type { IUserBranch } from '../../utils/auth';
 import { trpc } from 'utils/trpc';
 
 export default function DeleteUserModal({

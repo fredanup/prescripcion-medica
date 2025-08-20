@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import type { IEditCalling } from 'utils/auth';
+import type { IEditCalling } from '../../utils/auth';
 import { trpc } from 'utils/trpc';
 
 export default function DeleteCallingModal({

@@ -1,7 +1,7 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
 import mercadopago from 'mercadopago';
 import { env } from 'server/env';
-import { paymentSchema } from 'utils/auth';
+import { paymentSchema } from '../../utils/auth';
 
 // Configuración de MercadoPago
 const mercadoPagoAccessToken = env.MERCADO_PAGO_SAMPLE_ACCESS_TOKEN;

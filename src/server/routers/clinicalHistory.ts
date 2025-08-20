@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { createTRPCRouter, protectedProcedure } from '../../server/trpc';
-import { IListMyPatientsOutput, ITimelineOutput, ListMyPatientsOutput, TimelineOutputSchema } from 'utils/auth';
+import { IListMyPatientsOutput, ITimelineOutput, ListMyPatientsOutput, TimelineOutputSchema } from '../../utils/auth';
 import { Prisma } from '@prisma/client';
 
 

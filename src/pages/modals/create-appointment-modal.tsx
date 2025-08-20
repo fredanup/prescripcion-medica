@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import ReactDatePicker from 'react-datepicker';
 import FormTitle from 'utilities/form-title';
-import { IEditAppointment } from 'utils/auth';
+import { IEditAppointment } from '../../utils/auth';
 import { trpc } from 'utils/trpc';
 import 'react-datepicker/dist/react-datepicker.css';
 
