@@ -6,6 +6,7 @@ import { createContext } from 'server/context';
 import type { AppRouter } from 'server/routers/_app';
 import { appRouter } from 'server/routers/_app';
 
+export const config = { runtime: 'nodejs' };
 export default trpcNext.createNextApiHandler<AppRouter>({
   router: appRouter,
   /**
