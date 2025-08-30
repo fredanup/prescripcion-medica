@@ -29,9 +29,12 @@ export const appointmentRouter = createTRPCRouter({
       }
 
      
+      if (!ctx.session || !ctx.session.user || !ctx.session.user.patientId) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Sesión inválida.' });
+      }
       const appointment = await ctx.prisma.appointment.create({
         data: {
-          patientId: ctx.session!.user!.patientId!,
+          patientId: ctx.session.user.patientId,
           doctorId: input.doctorId,
           specialtyId: input.specialtyId,
           date: input.date,
@@ -44,7 +47,7 @@ export const appointmentRouter = createTRPCRouter({
   findByPatient: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.appointment.findMany({
       where: {
-        patientId: ctx.session!.user!.patientId!, 
+        patientId: ctx.session!.user.patientId!, 
       },
       include: {
         doctor: true,
@@ -58,7 +61,7 @@ export const appointmentRouter = createTRPCRouter({
   findMyAppointments: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.appointment.findMany({
         where: {
-          patientId: ctx.session!.user!.patientId!, 
+          patientId: ctx.session!.user.patientId!, 
           
         },
         include: {
