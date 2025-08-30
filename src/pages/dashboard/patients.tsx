@@ -112,7 +112,6 @@ export default function Patients() {
               <tr>
                 <th className="py-3 px-4">Paciente</th>
                 <th className="py-3 px-4">Sucursal</th>
-                <th className="py-3 px-4 w-40">Acciones</th>
               </tr>
             </thead>
 
@@ -165,29 +164,6 @@ export default function Patients() {
                       {user.Branch?.name ?? (
                         <span className="text-gray-500">—</span>
                       )}
-                    </td>
-
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="bg-blue-600 hover:bg-blue-700 transition text-white font-semibold px-4 py-2 rounded shadow-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // navega o abre modal
-                          }}
-                        >
-                          Ver
-                        </button>
-                        <button
-                          className="border border-gray-300 text-gray-700 hover:bg-gray-100 transition px-4 py-2 rounded"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // acción secundaria
-                          }}
-                        >
-                          Opciones
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))}
