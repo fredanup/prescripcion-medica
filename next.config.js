@@ -38,6 +38,9 @@ const config = {
       }
     ],
   },
+  experimental: {
+    serverComponentsExternalPackages: ['ws'],
+  },
 };
 
 module.exports = (phase) => {

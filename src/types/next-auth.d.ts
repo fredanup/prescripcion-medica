@@ -1,19 +1,27 @@
-import { type DefaultSession } from 'next-auth';
+// types/next-auth.d.ts
+import { type DefaultSession, type DefaultJWT } from 'next-auth';
 
 declare module 'next-auth' {
-  /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
   interface Session {
-    user?: {
+    user: {
       id: string;
-      role: string;
-      activeRole: string;
-      doctorId?: string | null;
-      patientId?: string | null;
-      pharmacistId?: string | null;
-      labStaffId?: string | null;
+      roles: string[];
+      activeRole: string | null;
+      doctorId: string | null;
+      patientId: string | null;
+      pharmacistId: string | null;
+      labStaffId: string | null;
     } & DefaultSession['user'];
   }
+}
 
+declare module 'next-auth/jwt' {
+  interface JWT extends DefaultJWT {
+    roles?: string[];
+    activeRole?: string | null;
+    doctorId?: string | null;
+    patientId?: string | null;
+    pharmacistId?: string | null;
+    labStaffId?: string | null;
+  }
 }

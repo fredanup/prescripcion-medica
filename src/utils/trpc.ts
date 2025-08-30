@@ -1,9 +1,7 @@
 import type { TRPCLink } from '@trpc/client';
 import {
-  createWSClient,
   httpBatchLink,
   loggerLink,
-  wsLink,
 } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
 import { ssrPrepass } from '@trpc/next/ssrPrepass';
@@ -13,67 +11,41 @@ import getConfig from 'next/config';
 import type { AppRouter } from 'server/routers/_app';
 import superjson from 'superjson';
 
-// ℹ️ Type-only import:
-// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export
-
 const { publicRuntimeConfig } = getConfig();
-
-const { APP_URL, WS_URL } = publicRuntimeConfig;
+const { APP_URL } = publicRuntimeConfig;
 
 function getEndingLink(ctx: NextPageContext | undefined): TRPCLink<AppRouter> {
-  if (typeof window === 'undefined') {
-    return httpBatchLink({
-      /**
-       * @link https://trpc.io/docs/v11/data-transformers
-       */
-      transformer: superjson,
-      url: `${APP_URL}/api/trpc`,
-      headers() {
-        if (!ctx?.req?.headers) {
-          return {};
-        }
-        // on ssr, forward client's headers to the server
-        return {
-          ...ctx.req.headers,
-          'x-ssr': '1',
-        };
-      },
-    });
-  }
-  const client = createWSClient({
-    url: WS_URL,
-  });
-  return wsLink({
-    client,
-    /**
-     * @link https://trpc.io/docs/v11/data-transformers
-     */
+  const url = typeof window === 'undefined' 
+    ? `${APP_URL}/api/trpc` 
+    : '/api/trpc';
+
+  return httpBatchLink({
     transformer: superjson,
+    url,
+    headers() {
+      if (typeof window !== 'undefined') {
+        return {};
+      }
+      
+      if (!ctx?.req?.headers) {
+        return {};
+      }
+      
+      // Server side - forward headers
+      return {
+        ...ctx.req.headers,
+        'x-ssr': '1',
+      };
+    },
   });
 }
 
-/**
- * A set of strongly-typed React hooks from your `AppRouter` type signature with `createReactQueryHooks`.
- * @link https://trpc.io/docs/v11/react#3-create-trpc-hooks
- */
 export const trpc = createTRPCNext<AppRouter>({
-  /**
-   * @link https://trpc.io/docs/v11/ssr
-   */
   ssr: true,
   ssrPrepass,
   config({ ctx }) {
-    /**
-     * If you want to use SSR, you need to use the server's full URL
-     * @link https://trpc.io/docs/v11/ssr
-     */
-
     return {
-      /**
-       * @link https://trpc.io/docs/v11/client/links
-       */
       links: [
-        // adds pretty logs to your console in development and logs errors in production
         loggerLink({
           enabled: (opts) =>
             (process.env.NODE_ENV === 'development' &&
@@ -82,21 +54,28 @@ export const trpc = createTRPCNext<AppRouter>({
         }),
         getEndingLink(ctx),
       ],
-      /**
-       * @link https://tanstack.com/query/v5/docs/reference/QueryClient
-       */
-      queryClientConfig: { defaultOptions: { queries: { staleTime: 60 } } },
+      queryClientConfig: { 
+        defaultOptions: { 
+          queries: { 
+            staleTime: 60,
+            retry: (failureCount, error) => {
+              // Type guard to check if error has 'data' property
+              if (
+                typeof error === 'object' &&
+                error !== null &&
+                'data' in error &&
+                (error as any).data?.code === 'UNAUTHORIZED'
+              ) {
+                return false;
+              }
+              return failureCount < 3;
+            },
+          } 
+        } 
+      },
     };
   },
-  /**
-   * @link https://trpc.io/docs/v11/data-transformers
-   */
   transformer: superjson,
 });
 
-// export const transformer = superjson;
-/**
- * This is a helper method to infer the output of a query resolver
- * @example type HelloOutput = RouterOutputs['hello']
- */
 export type RouterOutputs = inferRouterOutputs<AppRouter>;
