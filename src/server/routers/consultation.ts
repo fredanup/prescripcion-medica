@@ -12,148 +12,186 @@ export const consultationRouter = createTRPCRouter({
   /**
    * 1) Crear consulta (NO cierra la cita; retorna { id } para encadenar diagnóstico/órdenes)
    */
-  create: protectedProcedure
-    .input(
-      z.object({
-        appointmentId: z.string(),
-        reason: z.string().min(1),
-        diagnosis: z.string().optional(),     // libre
-        plan: z.string().optional(),          // si en Prisma es requerido, default ''
-        notes: z.string().optional(),
+create: protectedProcedure
+  .input(
+    z.object({
+      appointmentId: z.string(),
+      reason: z.string().min(1),
+      diagnosis: z.string().optional(),
+      plan: z.string().optional(),
+      notes: z.string().optional(),
+      indications: z.array(
+        z.object({
+          instruction: z.string().min(1),
+          notes: z.string().optional(),
+        }),
+      ).default([]),
+      prescriptions: z.array(
+        z.object({
+          medication: z.string().min(1),
+          dosage: z.string().optional().default(''),
+          frequency: z.string().optional().default(''),
+          duration: z.string().optional().default(''),
+          route: z.string().optional().default(''),
+        }),
+      ).default([]),
+    }),
+  )
+  .mutation(async ({ ctx, input }) => {
+    console.log('[consultationRouter.create] Input:', JSON.stringify(input, null, 2));
 
-        indications: z.array(
-          z.object({
-            instruction: z.string().min(1),
-            notes: z.string().optional(),
-          }),
-        ).default([]),
+    const doctorId = ctx?.session?.user?.doctorId as string | undefined;
+    console.log('[consultationRouter.create] doctorId:', doctorId);
 
-        prescriptions: z.array(
-          z.object({
-            medication: z.string().min(1),
-            dosage: z.string().optional().default(''),
-            frequency: z.string().optional().default(''),
-            duration: z.string().optional().default(''),
-            route: z.string().optional().default(''),
-          }),
-        ).default([]),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      console.log('[consultationRouter.create] Input:', JSON.stringify(input, null, 2));
-
-      const doctorId = ctx?.session?.user?.doctorId as string | undefined;
-      console.log('[consultationRouter.create] doctorId:', doctorId);
-
-      if (!doctorId) {
-        console.error('[consultationRouter.create] No hay doctorId en la sesión');
+    if (!doctorId) {
+      console.error('[consultationRouter.create] No hay doctorId en la sesión');
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'No se encontró el ID del doctor en la sesión',
+      });
+    }
+    
+    try {
+      // 1) Verificar cita
+      const appointment = await ctx.prisma.appointment.findUnique({
+        where: { id: input.appointmentId },
+        select: { id: true, patientId: true, doctorId: true, status: true },
+      });
+      
+      if (!appointment) {
+        console.error('[consultationRouter.create] Appointment no encontrado:', input.appointmentId);
         throw new TRPCError({
-          code: 'UNAUTHORIZED',
-          message: 'No se encontró el ID del doctor en la sesión',
+          code: 'NOT_FOUND',
+          message: `Cita con ID ${input.appointmentId} no encontrada.`,
         });
       }
       
-      try {
+      if (appointment.doctorId !== doctorId) {
+        throw new TRPCError({ 
+          code: 'FORBIDDEN', 
+          message: 'La cita pertenece a otro doctor' 
+        });
+      }
 
+      // 2) Verificar si ya existe consulta para esta cita
+      const existing = await ctx.prisma.consultation.findFirst({
+        where: { appointmentId: appointment.id, doctorId },
+        select: { id: true },
+      });
+
+      if (!existing) {
+        // CASO 1: Crear nueva consulta
+        console.log('[consultationRouter.create] Creando nueva consulta...');
         
-        // 1) Verificar cita
-        const appointment = await ctx.prisma.appointment.findUnique({
-          where: { id: input.appointmentId },
-          select: { id: true, patientId: true, doctorId: true, status: true },
-        });
-        if (!appointment) {
-          console.error('[consultationRouter.create] Appointment no encontrado:', input.appointmentId);
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: `Cita con ID ${input.appointmentId} no encontrada.`,
-          });
-        }
-        if (appointment.doctorId !== doctorId) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'La cita pertenece a otro doctor' });
-        }
-
-        // 2) ¿Ya existe consulta para esta cita?
-        const existing = await ctx.prisma.consultation.findFirst({
-          where: { appointmentId: appointment.id, doctorId },
-          select: { id: true },
-        });
-
-        if(!existing){
-          // 2) Crear consulta y relaciones
-          const created = await ctx.prisma.consultation.create({
-            data: {
-              appointmentId: appointment.id,
-              patientId: appointment.patientId,
-              doctorId,
-              reason: input.reason,
-              diagnosis: input.diagnosis ?? null,
-              plan: input.plan ?? '',
-              notes: input.notes ?? null,
-              // status por default = in_progress (según schema propuesto)
-              indications: {
-                create: input.indications.map((ind) => ({
-                  instruction: ind.instruction,
-                  notes: ind.notes ?? null,
-                })),
-              },
-              prescriptions: {
-                create: input.prescriptions.map((rx) => ({
-                  medication: rx.medication,
-                  dosage: rx.dosage ?? '',
-                  frequency: rx.frequency ?? '',
-                  duration: rx.duration ?? '',
-                  route: rx.route ?? '',
-                })),
-              },
-            },
-            select: { id: true },
-          });
-
-          return created; 
-        }
-        await ctx.prisma.$transaction(async (tx) => {
-        await tx.medicalIndication.deleteMany({ where: { consultationId: existing.id } });
-        await tx.medicationPrescription.deleteMany({ where: { consultationId: existing.id } });
-
-        // actualizar campos base + volver a crear arrays
-        await tx.consultation.update({
-          where: { id: existing.id },
+        const created = await ctx.prisma.consultation.create({
           data: {
+            appointmentId: appointment.id,
+            patientId: appointment.patientId,
+            doctorId,
             reason: input.reason,
             diagnosis: input.diagnosis ?? null,
             plan: input.plan ?? '',
             notes: input.notes ?? null,
             indications: {
-              create: input.indications.map(i => ({ instruction: i.instruction, notes: i.notes ?? null })),
+              create: input.indications.map((ind) => ({
+                instruction: ind.instruction,
+                notes: ind.notes ?? null,
+              })),
             },
             prescriptions: {
-              createMany: {
-                data: input.prescriptions.map(rx => ({
-                  medication: rx.medication,
-                  dosage: rx.dosage ?? '',
-                  frequency: rx.frequency ?? '',
-                  duration: rx.duration ?? '',
-                  route: rx.route ?? '',
-                })),
-                skipDuplicates: true,
-              },
+              create: input.prescriptions.map((rx) => ({
+                medication: rx.medication,
+                dosage: rx.dosage ?? '',
+                frequency: rx.frequency ?? '',
+                duration: rx.duration ?? '',
+                route: rx.route ?? '',
+              })),
             },
           },
+          select: { id: true },
         });
 
-        return { id: existing.id };
-      });
+        console.log('[consultationRouter.create] Consulta creada con ID:', created.id);
+        return created;
         
+      } else {
+        // CASO 2: Actualizar consulta existente
+        console.log('[consultationRouter.create] Actualizando consulta existente:', existing.id);
+        
+        const updated = await ctx.prisma.$transaction(async (tx) => {
+          // Eliminar relaciones existentes
+          await tx.medicalIndication.deleteMany({ 
+            where: { consultationId: existing.id } 
+          });
+          await tx.medicationPrescription.deleteMany({ 
+            where: { consultationId: existing.id } 
+          });
 
-      } catch (error) {
-        console.error('[consultationRouter.create] Error al crear consulta:', error);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Error al crear la consulta. Por favor, inténtelo de nuevo más tarde.',
+          // Actualizar consulta con nuevos datos
+          await tx.consultation.update({
+            where: { id: existing.id },
+            data: {
+              reason: input.reason,
+              diagnosis: input.diagnosis ?? null,
+              plan: input.plan ?? '',
+              notes: input.notes ?? null,
+            },
+          });
+
+          // Crear nuevas indicaciones
+          if (input.indications.length > 0) {
+            await tx.medicalIndication.createMany({
+              data: input.indications.map(ind => ({
+                consultationId: existing.id,
+                instruction: ind.instruction,
+                notes: ind.notes ?? null,
+              })),
+            });
+          }
+
+          // Crear nuevas prescripciones
+          if (input.prescriptions.length > 0) {
+            await tx.medicationPrescription.createMany({
+              data: input.prescriptions.map(rx => ({
+                consultationId: existing.id,
+                medication: rx.medication,
+                dosage: rx.dosage ?? '',
+                frequency: rx.frequency ?? '',
+                duration: rx.duration ?? '',
+                route: rx.route ?? '',
+              })),
+            });
+          }
+
+          return { id: existing.id };
         });
+
+        console.log('[consultationRouter.create] Consulta actualizada:', updated.id);
+        return updated;
+      }
+
+    } catch (error: any) {
+      console.error('[consultationRouter.create] Error completo:', error);
+      
+      // Si es un TRPCError que ya lanzamos, re-lanzarlo
+      if (error.code) {
+        throw error;
       }
       
-    }),
+      // Para otros errores, logging más detallado
+      if (error.message) {
+        console.error('[consultationRouter.create] Error message:', error.message);
+      }
+      if (error.stack) {
+        console.error('[consultationRouter.create] Error stack:', error.stack);
+      }
+      
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: `Error al crear la consulta: ${error.message || 'Error desconocido'}`,
+      });
+    }
+  }),
 
   /**
    * 2) Guardar diagnósticos estructurados (ConsultationDiagnosis[])
