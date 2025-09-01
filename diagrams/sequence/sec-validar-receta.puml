@@ -1,0 +1,23 @@
+@startuml SD-Validar-Receta
+title Validar Receta por Token
+
+actor "Farmacéutico" as Pharm
+participant "WebApp (tRPC client)" as UI
+participant "tRPC Server" as TRPC
+participant "prescriptionRouter" as Pres
+database "Prisma Client" as DB
+
+Pharm -> UI : Escanear QR (token)
+UI -> TRPC : prescription.verifyByToken(token)
+TRPC -> Pres : verifyByToken(token)
+Pres -> DB : find Prescription by token + items
+alt encontrado
+  DB --> Pres : {prescription, items, paciente, doctor}
+  Pres --> TRPC : datos receta
+  TRPC --> UI : Mostrar receta válida
+else no encontrado
+  DB --> Pres : null
+  Pres --> TRPC : error "token inválido"
+  TRPC --> UI : Mostrar error
+end
+@enduml

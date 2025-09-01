@@ -1,0 +1,25 @@
+@startuml SD-Reservar-Cita
+title Reservar Cita (Paciente)
+
+actor "Paciente" as Pac
+participant "WebApp (tRPC client)" as UI
+participant "tRPC Server" as TRPC
+participant "appointmentRouter" as Appt
+participant "Auth Bridge" as Auth
+database "Prisma Client" as DB
+
+Pac -> UI : Elegir doctor, especialidad, fecha
+UI -> TRPC : appointment.create(dto)
+TRPC -> Auth : validateSessionAndRole(PATIENT)
+Auth --> TRPC : ok (userCtx)
+TRPC -> Appt : create(dto, userCtx)
+
+Appt -> DB : checkConflicts(doctorId, date)
+DB --> Appt : noConflict
+Appt -> DB : insert Appointment(status=pending_payment)
+DB --> Appt : appointment{id, status}
+
+Appt --> TRPC : appointment
+TRPC --> UI : appointment
+UI --> Pac : Muestra cita pendiente de pago
+@enduml

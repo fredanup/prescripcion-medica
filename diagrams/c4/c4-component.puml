@@ -1,0 +1,40 @@
+@startuml C3-Componentes-Backend
+' ==== Includes C4 ====
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Backend (tRPC) – Componentes (C3)
+
+Container_Boundary(trpc, "tRPC Server (Node)") {
+  Component(auth, "Auth Bridge (NextAuth)", "Valida sesión/roles; expone session en ctx")
+  Component(appRouter, "appointmentRouter", "Citas: crear, listar, marcar pago, etc.")
+  Component(consultRouter, "consultationRouter", "Consulta: crear, diagnóstico, órdenes, cerrar, resumen")
+  Component(resultsRouter, "resultsRouter", "Resultados para paciente: listar/detalle")
+  Component(prescription, "prescriptionRouter", "Bundle receta (token/QR), deliver (email + PDF)")
+  Component(userRouter, "userRouter", "Pacientes del médico, perfil")
+}
+
+ComponentDb(db, "Prisma Client", "Acceso a PostgreSQL")
+Component(pdfsvc, "PDF Helper (PDFKit)", "buildPrescriptionPdfBuffer()")
+Component(mailer, "Mailer Helper (Nodemailer)", "ctx.mailer.send(...) o similar")
+
+Rel(auth, appRouter, "Valida sesión/rol")
+Rel(auth, consultRouter, "Valida sesión/rol")
+Rel(auth, resultsRouter, "Valida sesión/rol")
+Rel(auth, prescription, "Valida sesión/rol")
+Rel(auth, userRouter, "Valida sesión/rol")
+
+Rel(appRouter, db, "CRUD con Prisma")
+Rel(consultRouter, db, "CRUD con Prisma")
+Rel(resultsRouter, db, "READ con Prisma")
+Rel(prescription, db, "READ con Prisma")
+Rel(userRouter, db, "READ con Prisma")
+
+Rel(prescription, pdfsvc, "Genera Buffer PDF")
+Rel(prescription, mailer, "Adjunta PDF y envía")
+
+Rel(consultRouter, prescription, "Obtiene bundle de receta/QR")
+Rel(consultRouter, resultsRouter, "Publica órdenes → resultados (cuando listos)")
+
+
+SHOW_LEGEND()
+@enduml

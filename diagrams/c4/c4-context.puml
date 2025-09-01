@@ -1,0 +1,26 @@
+@startuml C1-Contexto
+' ==== Includes C4 ====
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Sistema Clínico – Diagrama de Contexto (C1)
+
+Person(paciente, "Paciente", "Reserva, paga y revisa su historial, recetas y resultados.")
+Person(medico, "Médico", "Gestiona agenda, atiende, prescribe y emite órdenes.")
+Person(admin, "Administrador", "Gestiona usuarios y roles.")
+
+System_Boundary(sys, "Plataforma Clínica") {
+  System(webapp, "Web App (Next.js)", "Front (SSR/CSR) + API Routes mínimas.")
+}
+
+System_Ext(mpago, "Mercado Pago", "Cobros con tarjeta (Brick/SDK).")
+System_Ext(smtp, "SMTP / Email", "Nodemailer para notificaciones y PDFs.")
+
+Rel(paciente, webapp, "Usa", "HTTPS")
+Rel(medico, webapp, "Usa", "HTTPS")
+Rel(admin,  webapp, "Usa", "HTTPS")
+
+Rel(webapp, mpago, "Cobros", "HTTPS")
+Rel(webapp, smtp,  "Envía correos", "SMTP/TLS")
+
+SHOW_LEGEND()
+@enduml

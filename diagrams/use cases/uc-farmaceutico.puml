@@ -1,0 +1,17 @@
+@startuml UC-Farmaceutico
+title Casos de Uso – Farmacéutico
+
+left to right direction
+skinparam actorStyle awesome
+
+actor "Farmacéutico" as Pharm
+
+rectangle "Backend (tRPC / Node)" as System {
+  (Validar sesión/rol) as UC_Auth <<Auth Bridge (NextAuth)>>
+  (Validar Receta por token) as UC_PresVerify <<prescriptionRouter>>
+
+  UC_PresVerify ..> UC_Auth : <<include>>
+}
+
+Pharm --> UC_PresVerify : "Escanear/validar QR"
+@enduml

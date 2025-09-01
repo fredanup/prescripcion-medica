@@ -1,0 +1,200 @@
+@startuml C1-Clases-Clinico-Conciso
+title Backend Clínico – Diagrama de Clases 
+
+skinparam classAttributeIconSize 0
+hide empty methods
+
+' ======================
+' ==== IDENTIDAD =======
+' ======================
+class User {
+  +id: String
+  +email: String
+  +name: String
+  +lastName: String
+}
+
+class Role {
+  +id: String
+  +name: RoleType
+}
+
+class UserRole {
+  +id: String
+  +userId: String
+  +roleId: String
+}
+
+class Branch {
+  +id: String
+  +name: String
+  +address: String
+}
+
+User ||--o{ UserRole
+Role ||--o{ UserRole
+Branch ||--o{ User : "pertenece a"
+
+' ======================
+' === DIRECTORIO/MD ====
+' ======================
+class Patient {
+  +id: String
+  +userId: String
+  +bloodType: String
+}
+
+class Doctor {
+  +id: String
+  +userId: String
+  +license: String
+}
+
+class Specialty {
+  +id: String
+  +name: String
+  +price: Float
+}
+
+class Schedule {
+  +id: String
+  +doctorId: String
+  +dayOfWeek: Int
+  +startTime: DateTime
+  +endTime: DateTime
+}
+
+class DoctorPatient {
+  +id: String
+  +doctorId: String
+  +patientId: String
+  +assignedAt: DateTime
+}
+
+User ||--o| Patient
+User ||--o| Doctor
+Doctor }o--o{ Specialty : "tiene"
+Doctor ||--o{ Schedule
+Doctor ||--o{ DoctorPatient
+Patient ||--o{ DoctorPatient
+
+' ======================
+' ====== AGENDA ========
+' ======================
+class Appointment {
+  +id: String
+  +patientId: String
+  +doctorId: String
+  +specialtyId: String
+  +date: DateTime
+  +status: AppointmentStatus
+  +paidAt: DateTime
+}
+
+Appointment }o--|| Patient
+Appointment }o--|| Doctor
+Appointment }o--|| Specialty
+
+' ======================
+' ===== CONSULTA =======
+' ======================
+class Consultation {
+  +id: String
+  +patientId: String
+  +doctorId: String
+  +appointmentId: String
+  +date: DateTime
+  +status: ConsultationStatus
+  +closedAt: DateTime
+  +reason: String
+  +diagnosis: String
+  +plan: String
+  +notes: String
+}
+
+class ConsultationDiagnosis {
+  +id: String
+  +consultationId: String
+  +code: String
+  +label: String
+  +severity: String
+  +notes: String
+  +createdAt: DateTime
+}
+
+class MedicalIndication {
+  +id: String
+  +consultationId: String
+  +instruction: String
+  +notes: String
+}
+
+Consultation }o--|| Patient
+Consultation }o--|| Doctor
+Consultation ||--o{ ConsultationDiagnosis
+Consultation ||--o{ MedicalIndication
+
+Appointment ||--o| Consultation : "vincula"
+
+' ======================
+' ===== RECETA =========
+' ======================
+class MedicationPrescription {
+  +id: String
+  +consultationId: String
+  +medication: String
+  +dosage: String
+  +frequency: String
+  +duration: String
+  +route: String
+  +dispensed: Boolean
+  +dispensedAt: DateTime
+}
+
+Consultation ||--o{ MedicationPrescription
+
+' ======================
+' ===== ÓRDENES ========
+' ======================
+class MedicalOrder {
+  +id: String
+  +patientId: String
+  +doctorId: String
+  +consultationId: String
+  +area: MedicalOrderType
+  +description: String
+  +status: MedicalOrderStatus
+  +priority: MedicalOrderPriority
+  +date: DateTime
+  +results: String
+  +resultFile: String
+  +dispensedAt: DateTime
+}
+
+MedicalOrder }o--|| Patient
+MedicalOrder }o--|| Doctor
+MedicalOrder }o--o| Consultation
+
+' ======================
+' ==== HISTORIA CL =====
+' ======================
+class ClinicalHistory {
+  +id: String
+  +patientId: String
+  +date: DateTime
+  +summary: String
+}
+
+class Allergy {
+  +id: String
+  +patientId: String
+  +substance: String
+  +severity: String
+  +notes: String
+  +date: DateTime
+}
+
+Patient ||--o{ ClinicalHistory
+Patient ||--o{ Allergy
+
+@enduml

@@ -1,0 +1,27 @@
+@startuml UC-Administrador
+title Casos de Uso – Administrador
+
+left to right direction
+skinparam actorStyle awesome
+
+actor "Administrador" as Admin
+
+rectangle "Backend (tRPC / Node)" as System {
+  (Validar sesión/rol) as UC_Auth <<Auth Bridge (NextAuth)>>
+
+  (Administrar Sucursales\n- Listar/Crear/Actualizar) as UC_Branch <<branchRouter>>
+  (Listar Roles de Usuario) as UC_Role <<roleRouter>>
+  
+  
+
+  UC_Branch ..> UC_Auth : <<include>>
+  UC_Role ..> UC_Auth : <<include>>
+  
+  
+}
+
+Admin --> UC_Branch
+Admin --> UC_Role
+
+
+@enduml

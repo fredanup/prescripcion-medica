@@ -1,0 +1,28 @@
+@startuml SD-Marcar-Pago
+title Marcar Pago de Cita y Notificar
+
+actor "Paciente" as Pac
+participant "WebApp (tRPC client)" as UI
+participant "tRPC Server" as TRPC
+participant "appointmentRouter" as Appt
+participant "Auth Bridge" as Auth
+database "Prisma Client" as DB
+participant "Mailer (Nodemailer)" as Mailer
+
+Pac -> UI : Confirmar pago
+UI -> TRPC : appointment.markPaid(appointmentId)
+TRPC -> Auth : validateSessionAndRole(PATIENT)
+Auth --> TRPC : ok
+TRPC -> Appt : markPaid(appointmentId, userCtx)
+
+Appt -> DB : update Appointment set status=confirmed, paidAt=now()
+DB --> Appt : ok
+
+opt Notificar médico
+  Appt -> Mailer : send(doctorEmail,\n"Pago confirmado", detalles)
+  Mailer --> Appt : ok
+end
+
+Appt --> TRPC : ok
+TRPC --> UI : ok
+@enduml

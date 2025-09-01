@@ -1,0 +1,30 @@
+@startuml UC-Paciente
+title Casos de Uso – Paciente
+
+left to right direction
+skinparam actorStyle awesome
+
+actor "Paciente" as Pac
+
+rectangle "Backend (tRPC / Node)" as System {
+  (Validar sesión/rol) as UC_Auth <<Auth Bridge (NextAuth)>>
+
+  (Gestionar Citas\n- Crear\n- Listar) as UC_Appt <<appointmentRouter>>
+  (Ver Historia Clínica propia) as UC_Hist <<clinicalHistoryRouter>>
+  (Recibir/Descargar Receta) as UC_PresReceive <<prescriptionRouter>>
+  (Ver Especialidades) as UC_Spec <<specialtyRouter>>
+  (Ver Médicos por Especialidad) as UC_Doctor <<doctorRouter>>
+
+  UC_Appt ..> UC_Auth : <<include>>
+  UC_Hist ..> UC_Auth : <<include>>
+  UC_PresReceive ..> UC_Auth : <<include>>
+  UC_Spec ..> UC_Auth : <<include>>
+  UC_Doctor ..> UC_Auth : <<include>>
+}
+
+Pac --> UC_Appt
+Pac --> UC_Hist
+Pac --> UC_PresReceive : "Descarga desde email/portal"
+Pac --> UC_Spec
+Pac --> UC_Doctor
+@enduml

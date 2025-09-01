@@ -1,0 +1,31 @@
+@startuml SD-Historia-Clinica
+title Línea de Tiempo de Historia Clínica
+
+actor "Médico/Paciente" as Actor
+participant "WebApp (tRPC client)" as UI
+participant "tRPC Server" as TRPC
+participant "clinicalHistoryRouter" as Hist
+participant "Auth Bridge" as Auth
+database "Prisma Client" as DB
+
+Actor -> UI : Ver historial (patientId?)
+UI -> TRPC : clinicalHistory.getTimeline(patientId?)
+TRPC -> Auth : validateSessionAndRole(DOCTOR|PATIENT)
+Auth --> TRPC : ok (y chequeo ownership/permiso)
+TRPC -> Hist : getTimeline(patientId, userCtx)
+
+par Agregación
+  Hist -> DB : list Consultations + Diagnoses + Indications
+  DB --> Hist : datos consultas
+  Hist -> DB : list MedicationPrescriptions
+  DB --> Hist : datos recetas
+  Hist -> DB : list MedicalOrders
+  DB --> Hist : datos órdenes
+  Hist -> DB : list ClinicalHistory (resúmenes) + Allergies
+  DB --> Hist : datos adicionales
+end
+
+Hist --> TRPC : timeline[] (ordenado por fecha)
+TRPC --> UI : timeline[]
+UI -> Actor : Render línea de tiempo
+@enduml

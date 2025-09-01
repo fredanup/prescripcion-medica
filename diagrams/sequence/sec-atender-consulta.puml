@@ -1,0 +1,79 @@
+@startuml SD-Consulta-Receta
+title Atender Consulta y Generar/Enviar Receta
+
+actor "Doctor" as Doc
+participant "WebApp (tRPC client)" as UI
+participant "tRPC Server" as TRPC
+participant "consultationRouter" as Cons
+participant "prescriptionRouter" as Pres
+participant "Auth Bridge" as Auth
+database "Prisma Client" as DB
+participant "PDF Helper (PDFKit)" as PDF
+participant "Mailer (Nodemailer)" as Mailer
+
+' Abrir consulta
+Doc -> UI : Abrir consulta (desde cita)
+UI -> TRPC : consultation.open(appointmentId)
+TRPC -> Auth : validateSessionAndRole(DOCTOR)
+Auth --> TRPC : ok
+TRPC -> Cons : open(appointmentId, userCtx)
+Cons -> DB : create Consultation(status=in_progress,\nappointmentId=..., patientId, doctorId)
+DB --> Cons : consultation{id}
+Cons --> TRPC : consultation
+TRPC --> UI : consultation
+
+' Diagnóstico e indicaciones
+Doc -> UI : Agregar diagnóstico / indicaciones
+loop por cada diagnóstico
+  UI -> TRPC : consultation.addDiagnosis(consultationId, dto)
+  TRPC -> Cons : addDiagnosis(...)
+  Cons -> DB : insert ConsultationDiagnosis(...)
+  DB --> Cons : ok
+  Cons --> TRPC : ok
+  TRPC --> UI : ok
+end
+
+' Prescripción (ítems)
+loop por cada medicamento
+  UI -> TRPC : consultation.addPrescriptionItem(consultationId, item)
+  TRPC -> Cons : addPrescriptionItem(...)
+  Cons -> DB : insert MedicationPrescription(...)
+  DB --> Cons : ok
+  Cons --> TRPC : ok
+  TRPC --> UI : ok
+end
+
+' Generar bundle (token/QR)
+UI -> TRPC : prescription.generateBundle(consultationId)
+TRPC -> Pres : generateBundle(consultationId, userCtx)
+Pres -> DB : upsert token/qrData para consulta
+DB --> Pres : {token, qrData}
+Pres --> TRPC : {token, qrData}
+TRPC --> UI : {token, qrData}
+
+' Enviar PDF por correo
+UI -> TRPC : prescription.deliver(prescriptionId, emailPaciente)
+TRPC -> Pres : deliver(...)
+Pres -> DB : load Prescription + Items + Paciente
+DB --> Pres : datos
+Pres -> PDF : buildPrescriptionPdfBuffer(datos)
+PDF --> Pres : pdfBuffer
+Pres -> Mailer : send(emailPaciente, "Tu receta", adjunto=pdfBuffer)
+Mailer --> Pres : ok
+Pres --> TRPC : ok
+TRPC --> UI : ok
+
+' Cerrar consulta
+UI -> TRPC : consultation.close(consultationId)
+TRPC -> Cons : close(...)
+Cons -> DB : update Consultation set status=completed, closedAt=now()
+DB --> Cons : ok
+Cons --> TRPC : ok
+TRPC --> UI : ok
+
+note right
+  Constraint Prisma:
+  Consultation.appointmentId es único
+  (a lo sumo 1 consulta por cita)
+end note
+@enduml

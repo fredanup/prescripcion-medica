@@ -1,0 +1,360 @@
+@startuml C1-Clases-Backend
+
+title Backend (tRPC) – Diagrama de Clases (Dominio + Servicios)
+
+skinparam classAttributeIconSize 0
+hide empty attributes
+hide empty methods
+
+' =========================
+' ======= ENUMS ===========
+' =========================
+enum RoleType {
+  ADMIN
+  DOCTOR
+  PATIENT
+  PHARMACIST
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum ConsultationStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum OrderType {
+  LAB
+  IMAGING
+  OTHER
+}
+
+' =========================
+' ======= DOMINIO =========
+' =========================
+package "Dominio" <<Rectangle>> {
+
+  class User {
+    +id: UUID
+    +email: string
+    +name: string
+    +roles: Set<RoleType>
+    +active: boolean
+  }
+
+  class Patient {
+    +id: UUID
+    +userId: UUID
+    +documentNumber: string
+    +birthDate: date
+    +phone: string
+  }
+
+  class Doctor {
+    +id: UUID
+    +userId: UUID
+    +license: string
+  }
+
+  class Specialty {
+    +id: UUID
+    +name: string
+    +description: string
+  }
+
+  class Branch {
+    +id: UUID
+    +name: string
+    +address: string
+    +phone: string
+    +active: boolean
+  }
+
+  class Appointment {
+    +id: UUID
+    +patientId: UUID
+    +doctorId: UUID
+    +branchId: UUID
+    +scheduledAt: datetime
+    +status: AppointmentStatus
+    +paid: boolean
+    +markPaid(): void
+    +cancel(): void
+  }
+
+  class Consultation {
+    +id: UUID
+    +appointmentId: UUID
+    +doctorId: UUID
+    +patientId: UUID
+    +status: ConsultationStatus
+    +createdAt: datetime
+    +closedAt: datetime
+    +open(): void
+    +addDiagnosis(d: Diagnosis): void
+    +addOrder(o: Order): void
+    +close(): void
+  }
+
+  class Diagnosis {
+    +id: UUID
+    +consultationId: UUID
+    +code: string
+    +description: string
+  }
+
+  class Order {
+    +id: UUID
+    +consultationId: UUID
+    +type: OrderType
+    +details: string
+  }
+
+  class ClinicalHistory {
+    +id: UUID
+    +patientId: UUID
+    +createdAt: datetime
+    +getTimeline(): List<HistoryEntry>
+  }
+
+  class HistoryEntry {
+    +id: UUID
+    +patientId: UUID
+    +occurredAt: datetime
+    +type: string
+    +referenceId: UUID
+    +summary: string
+  }
+
+  class Prescription {
+    +id: UUID
+    +consultationId: UUID
+    +patientId: UUID
+    +doctorId: UUID
+    +createdAt: datetime
+    +token: string
+    +qrData: string
+    +addItem(i: PrescriptionItem): void
+  }
+
+  class PrescriptionItem {
+    +id: UUID
+    +prescriptionId: UUID
+    +medication: string
+    +dosage: string
+    +frequency: string
+    +durationDays: int
+    +notes: string
+  }
+}
+
+' =========================
+' ===== Repositorios ======
+' =========================
+package "Aplicación (Puertos)" <<Folder>> {
+  interface IUserRepository {
+    +findById(id: UUID): User
+    +findByEmail(email: string): User
+  }
+  interface IPatientRepository {
+    +findById(id: UUID): Patient
+    +listByDoctor(doctorId: UUID): List<Patient>
+  }
+  interface IDoctorRepository {
+    +findById(id: UUID): Doctor
+    +listBySpecialty(specialtyId: UUID): List<Doctor>
+  }
+  interface ISpecialtyRepository {
+    +listAll(): List<Specialty>
+  }
+  interface IBranchRepository {
+    +create(b: Branch): Branch
+    +update(b: Branch): Branch
+    +list(): List<Branch>
+  }
+  interface IAppointmentRepository {
+    +create(a: Appointment): Appointment
+    +findById(id: UUID): Appointment
+    +listByUser(userId: UUID): List<Appointment>
+    +save(a: Appointment): void
+  }
+  interface IConsultationRepository {
+    +create(c: Consultation): Consultation
+    +findById(id: UUID): Consultation
+    +save(c: Consultation): void
+  }
+  interface IClinicalHistoryRepository {
+    +getByPatient(patientId: UUID): ClinicalHistory
+    +appendEntry(e: HistoryEntry): void
+  }
+  interface IPrescriptionRepository {
+    +create(p: Prescription): Prescription
+    +findByToken(token: string): Prescription
+    +listByPatient(patientId: UUID): List<Prescription>
+  }
+
+  interface IAuthService {
+    +validateSessionAndRole(session: any, required: Set<RoleType>): User
+  }
+  interface IPdfService {
+    +buildPrescriptionPdfBuffer(p: Prescription): byte[]
+  }
+  interface IMailerService {
+    +send(to: string, subject: string, body: string, attachment?: byte[]): void
+  }
+}
+
+' =========================
+' ====== Servicios =========
+' =========================
+package "Aplicación (Casos de Uso / Routers)" <<Rectangle>> {
+  class AppointmentService <<application>> {
+    -appointmentRepo: IAppointmentRepository
+    -patientRepo: IPatientRepository
+    -doctorRepo: IDoctorRepository
+    -auth: IAuthService
+    +createAppointment(session, dto): Appointment
+    +listMyAppointments(session): List<Appointment>
+    +markPaid(session, appointmentId: UUID): void
+  }
+
+  class ConsultationService <<application>> {
+    -consultationRepo: IConsultationRepository
+    -appointmentRepo: IAppointmentRepository
+    -historyRepo: IClinicalHistoryRepository
+    -auth: IAuthService
+    +open(session, appointmentId: UUID): Consultation
+    +addDiagnosis(session, consultationId: UUID, d: Diagnosis): void
+    +addOrder(session, consultationId: UUID, o: Order): void
+    +close(session, consultationId: UUID): void
+  }
+
+  class PrescriptionService <<application>> {
+    -prescriptionRepo: IPrescriptionRepository
+    -consultationRepo: IConsultationRepository
+    -pdf: IPdfService
+    -mailer: IMailerService
+    -auth: IAuthService
+    +generateBundle(session, consultationId: UUID): {token: string, qrData: string}
+    +deliver(session, prescriptionId: UUID, recipientEmail: string): void
+    +verifyByToken(token: string): Prescription
+  }
+
+  class UserService <<application>> {
+    -userRepo: IUserRepository
+    -patientRepo: IPatientRepository
+    -auth: IAuthService
+    +listDoctorPatients(session): List<Patient>
+    +getProfile(session): User
+  }
+
+  class DirectoryService <<application>> {
+    -specRepo: ISpecialtyRepository
+    -doctorRepo: IDoctorRepository
+    -branchRepo: IBranchRepository
+    -auth: IAuthService
+    +listSpecialties(session): List<Specialty>
+    +listDoctorsBySpecialty(session, specialtyId: UUID): List<Doctor>
+    +listBranches(session): List<Branch>
+    +createBranch(session, dto): Branch
+    +updateBranch(session, dto): Branch
+  }
+}
+
+' =========================
+' ==== Infraestructura ====
+' =========================
+package "Infraestructura (Adaptadores)" <<Frame>> {
+  class PrismaClientAdapter <<infrastructure>> {
+    -prisma: any
+  }
+  class NextAuthAdapter <<infrastructure>> { }
+  class PdfKitAdapter <<infrastructure>> { }
+  class NodemailerAdapter <<infrastructure>> { }
+}
+
+' Implementaciones (adaptadores) de puertos
+PrismaClientAdapter ..|> IUserRepository
+PrismaClientAdapter ..|> IPatientRepository
+PrismaClientAdapter ..|> IDoctorRepository
+PrismaClientAdapter ..|> ISpecialtyRepository
+PrismaClientAdapter ..|> IBranchRepository
+PrismaClientAdapter ..|> IAppointmentRepository
+PrismaClientAdapter ..|> IConsultationRepository
+PrismaClientAdapter ..|> IClinicalHistoryRepository
+PrismaClientAdapter ..|> IPrescriptionRepository
+
+NextAuthAdapter ..|> IAuthService
+PdfKitAdapter ..|> IPdfService
+NodemailerAdapter ..|> IMailerService
+
+' =========================
+' ====== Relaciones =======
+' =========================
+
+' Agregaciones / asociaciones de dominio
+User "1" o-- "1" Patient : uses
+User "1" o-- "1" Doctor : uses
+Doctor "1" -- "1..*" Specialty : "está adscrito a"
+Patient "1" -- "1" ClinicalHistory
+ClinicalHistory "1" o-- "0..*" HistoryEntry
+Appointment "*" -- "1" Patient
+Appointment "*" -- "1" Doctor
+Appointment "*" -- "1" Branch
+Consultation "*" -- "1" Appointment
+Consultation "1" o-- "0..*" Diagnosis
+Consultation "1" o-- "0..*" Order
+Prescription "*" -- "1" Consultation
+Prescription "1" o-- "1..*" PrescriptionItem
+
+' Servicios → Puertos
+AppointmentService --> IAppointmentRepository
+AppointmentService --> IPatientRepository
+AppointmentService --> IDoctorRepository
+AppointmentService --> IAuthService
+
+ConsultationService --> IConsultationRepository
+ConsultationService --> IAppointmentRepository
+ConsultationService --> IClinicalHistoryRepository
+ConsultationService --> IAuthService
+
+PrescriptionService --> IPrescriptionRepository
+PrescriptionService --> IConsultationRepository
+PrescriptionService --> IPdfService
+PrescriptionService --> IMailerService
+PrescriptionService --> IAuthService
+
+UserService --> IUserRepository
+UserService --> IPatientRepository
+UserService --> IAuthService
+
+DirectoryService --> ISpecialtyRepository
+DirectoryService --> IDoctorRepository
+DirectoryService --> IBranchRepository
+DirectoryService --> IAuthService
+
+' Notas
+note right of PrescriptionService
+  Corresponde a prescriptionRouter:
+  - generateBundle()
+  - deliver()
+  - verifyByToken()
+end note
+
+note right of AppointmentService
+  Corresponde a appointmentRouter:
+  - create, list, markPaid
+end note
+
+note bottom of ConsultationService
+  consultationRouter: abrir, diagnosticar,
+  órdenes, cerrar, resumen
+end note
+
+@enduml

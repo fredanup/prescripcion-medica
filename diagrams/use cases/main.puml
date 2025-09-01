@@ -1,37 +1,80 @@
-@startuml
-usecase registrarUsuario as "Registrar usuario"
-usecase iniciarSesion as "Iniciar sesión"
-usecase cerrarSesion as "Cerrar sesión"
+@startuml UC-Backend-tRPC
 
-'Esto es del paciente
-usecase verHistorialClinico as "Ver historial clínico"
+title Backend (tRPC) – Casos de Uso
 
+left to right direction
+skinparam usecase {
+  BackgroundColor White
+  BorderColor #444
+}
+skinparam actorStyle awesome
 
-usecase visualizarPacientes as "Visualizar pacientes"
-usecase registrarPaciente as "Registrar paciente"
-usecase verHistorialDePaciente as "Ver historial de paciente"
+actor "Médico" as Med
+actor "Paciente" as Pac
+actor "Administrador" as Admin
+actor "Farmacéutico" as Pharm
 
-usecase prescribirIndicacion as "Prescribir indicación médica"
-usecase modificarIndicacion as "Modificar indicación médica"
-usecase eliminarIndicacion as "Eliminar indicación médica"
+rectangle "Backend (tRPC / Node + tRPC)" as System {
+  (Validar sesión/rol) as UC_Auth <<Auth Bridge (NextAuth)>>
 
-usecase prescribirReceta as "Prescribir receta médica"
-usecase modificarReceta as "Modificar receta médica"
-usecase eliminarReceta as "Eliminar receta médica"
-usecase visualizarRecetas as "Visualizar recetas médicas"
-usecase enviarReceta as "Enviar receta médica"
+  (Gestionar Citas- Crear\n- Listar\n- Marcar pago) as UC_Appt <<appointmentRouter>>
+  (Atender Consulta- Abrir/crear\n- Diagnóstico\n- Órdenes\n- Cerrar\n- Resumen) as UC_Consult <<consultationRouter>>
 
-usecase verRecetasRecibidas as "Ver recetas recibidas"
-usecase atenderReceta as "Atender receta"
+  (Gestionar Receta - Generar bundle token/QR\n- Generar PDF\n- Enviar por email) as UC_Pres <<prescriptionRouter>>
+  (Validar Receta por token/QR) as UC_PresVerify <<prescriptionRouter>>
 
-usecase registrarMedicamento as "Registrar medicamento"
-usecase modificarMedicamento as "Modificar medicamento"
-usecase eliminarMedicamento as "Eliminar medicamento"
-usecase visualizarMedicamentos as "Visualizar medicamentos"
-usecase registrarEjemplarDeMedicamento as "Registrar ejemplar de medicamento"
-usecase modificarEjemplarDeMedicamento as "Modificar ejemplar de medicamento"
-usecase eliminarEjemplarDeMedicamento as "Eliminar ejemplar de medicamento"
-usecase visualizarEjemplaresDeMedicamento as "Visualizar ejemplares de medicamento"
+  (Gestionar Pacientes del Médico / Perfil) as UC_User <<userRouter>>
 
+  (Ver Especialidades) as UC_Spec <<specialtyRouter>>
+  (Ver Médicos por Especialidad) as UC_Doctor <<doctorRouter>>
+  (Ver Historia Clínica\n- Línea de tiempo) as UC_Hist <<clinicalHistoryRouter>>
+
+  (Administrar Sucursales\n- Listar/Crear/Actualizar) as UC_Branch <<branchRouter>>
+  (Listar Roles de Usuario) as UC_Role <<roleRouter>>
+
+  ' Relaciones de inclusión de Auth
+  UC_Appt ..> UC_Auth : <<include>>
+  UC_Consult ..> UC_Auth : <<include>>
+  UC_Pres ..> UC_Auth : <<include>>
+  UC_PresVerify ..> UC_Auth : <<include>>
+  UC_User ..> UC_Auth : <<include>>
+  UC_Spec ..> UC_Auth : <<include>>
+  UC_Doctor ..> UC_Auth : <<include>>
+  UC_Hist ..> UC_Auth : <<include>>
+  UC_Branch ..> UC_Auth : <<include>>
+  UC_Role ..> UC_Auth : <<include>>
+}
+
+' ---- Enlaces actor → casos de uso
+Med --> UC_Appt
+Med --> UC_Consult
+Med --> UC_Pres
+Med --> UC_User
+Med --> UC_Spec
+Med --> UC_Doctor
+Med --> UC_Hist
+
+Pac --> UC_Appt
+Pac --> UC_Pres : "Recibe por email / descarga"
+Pac --> UC_PresVerify : "Escanea QR (opcional)"
+Pac --> UC_Hist : "Consulta propia (si aplica)"
+
+Pharm --> UC_PresVerify : "Escanear/validar QR"
+
+Admin --> UC_Branch
+Admin --> UC_Role
+Admin --> UC_Doctor
+Admin --> UC_Spec
+
+' ---- Notas que vinculan helpers/infra relevantes
+note right of UC_Pres
+  Usa PDF Helper (PDFKit) para PDF
+  y Mailer (Nodemailer) para envío
+end note
+
+note bottom of UC_Consult
+  Consulta puede requerir datos de citas
+  (vía BD; no acoplamiento directo)
+end note
 
 @enduml

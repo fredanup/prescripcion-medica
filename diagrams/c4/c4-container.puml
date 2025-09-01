@@ -1,0 +1,34 @@
+@startuml C2-Contenedores
+' ==== Includes C4 ====
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Sistema Clínico – Diagrama de Contenedores (C2)
+
+Person(paciente, "Paciente")
+Person(medico, "Médico")
+Person(admin, "Administrador")
+
+System_Boundary(sys, "Plataforma Clínica") {
+  Container(next, "Next.js App", "Node/Next.js", "UI (React) + API Routes públicas mínimas + SSR/CSR")
+  Container(trpc, "tRPC Server", "Node", "Procedimientos tipados de dominio")
+  ContainerDb(db, "PostgreSQL", "Postgres", "Datos clínicos/usuarios/roles/citas")
+  Container(mailer, "Mailer", "Nodemailer", "Envía emails y adjuntos PDF")
+  Container(pdfsvc, "PDF Service", "PDFKit", "Genera PDFs (recetas) en memoria (Buffer)")
+  Container(mpagos, "Mercado Pago SDK", "JS SDK", "Pago embebido (Brick) en el front")
+  Container(apiPublic, "API Pública Farmacia", "Next API Route", "Lectura por token (JWT)")
+}
+
+Rel(paciente, next, "Navega/UI", "HTTPS")
+Rel(medico,  next, "Navega/UI", "HTTPS")
+Rel(admin,   next, "Navega/UI", "HTTPS")
+
+Rel(next, trpc, "Llama procedimientos (fetch)", "HTTP")
+Rel(trpc, db, "ORM Prisma", "TCP 5432")
+Rel(trpc, pdfsvc, "Genera PDF de prescripción", "memoria/Buffer")
+Rel(trpc, mailer, "Envía correos + adjuntos", "SMTP/TLS")
+Rel(next, mpagos, "Pago tarjeta (Brick)", "HTTPS")
+Rel(next, apiPublic, "Link/QR para farmacia", "HTTPS")
+Rel(apiPublic, db, "Consulta sólo lectura por token", "TCP 5432")
+
+SHOW_LEGEND()
+@enduml
