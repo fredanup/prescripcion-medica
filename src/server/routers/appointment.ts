@@ -130,44 +130,53 @@ export const appointmentRouter = createTRPCRouter({
     return takenAppointments.map(appointment => appointment.date);
   }),
 
-  findDoctorAppointmentsByDate: protectedProcedure
-    .input(z.object({ date: z.date() })) // 'YYYY-MM-DD'
-    .query(async ({ ctx, input }) => {
-      const doctorId = ctx.session?.user?.doctorId;
-      if (!doctorId) throw new TRPCError({ code: 'UNAUTHORIZED' });
+ findDoctorAppointmentsByDate: protectedProcedure
+  .input(z.object({ date: z.date() }))
+  .query(async ({ ctx, input }) => {
+    const doctorId = ctx.session?.user?.doctorId;
+    if (!doctorId) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
-      const startOfToday = new Date(input.date);
-      startOfToday.setHours(0, 0, 0, 0);
+    // Crear fechas en UTC para evitar problemas de zona horaria
+    const inputDate = new Date(input.date);
+    
+    // Obtener año, mes y día de la fecha seleccionada
+    const year = inputDate.getFullYear();
+    const month = inputDate.getMonth();
+    const day = inputDate.getDate();
+    
+    // Crear fechas específicas sin interferencia de zona horaria
+    const startOfDay = new Date(year, month, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month, day, 23, 59, 59, 999);
 
-      const endOfToday = new Date(input.date);
-      endOfToday.setHours(23, 59, 59, 999);
+    console.log('Fecha seleccionada:', inputDate.toISOString());
+    console.log('Inicio del día:', startOfDay.toISOString());
+    console.log('Fin del día:', endOfDay.toISOString());
 
-
-      return await ctx.prisma.appointment.findMany({
-        where: {
-          doctorId,
-          date: {
-            gte: startOfToday,
-           lte: endOfToday,
-          },
-          status: {
-          in: ['completed', 'confirmed'], // Solo citas pendientes o confirmadas
-        }
+    return await ctx.prisma.appointment.findMany({
+      where: {
+        doctorId,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
         },
-        include: {
-          patient: {
-            include: {
-              user: true,
-              clinicalHistory: {
-                orderBy: { date: 'desc' },
-                take: 1,
-              },
+        status: {
+          in: ['completed', 'confirmed'],
+        }
+      },
+      include: {
+        patient: {
+          include: {
+            user: true,
+            clinicalHistory: {
+              orderBy: { date: 'desc' },
+              take: 1,
             },
           },
-          specialty: true,
         },
-        orderBy: { date: 'asc' },
-      });
-    }),
+        specialty: true,
+      },
+      orderBy: { date: 'asc' },
+    });
+  }),
 });
 
