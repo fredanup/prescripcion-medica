@@ -7,7 +7,7 @@ participant "tRPC Server" as TRPC
 participant "prescriptionRouter" as Pres
 database "Prisma Client" as DB
 
-Pharm -> UI : Escanear QR (token)
+Pharm -> UI : Abrir url con token incrustado
 UI -> TRPC : prescription.verifyByToken(token)
 TRPC -> Pres : verifyByToken(token)
 Pres -> DB : find Prescription by token + items
