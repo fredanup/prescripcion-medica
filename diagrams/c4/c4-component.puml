@@ -5,36 +5,56 @@
 title Backend (tRPC) – Componentes (C3)
 
 Container_Boundary(trpc, "tRPC Server (Node)") {
-  Component(auth, "Auth Bridge (NextAuth)", "Valida sesión/roles; expone session en ctx")
-  Component(appRouter, "appointmentRouter", "Citas: crear, listar, marcar pago, etc.")
-  Component(consultRouter, "consultationRouter", "Consulta: crear, diagnóstico, órdenes, cerrar, resumen")
-  Component(resultsRouter, "resultsRouter", "Resultados para paciente: listar/detalle")
-  Component(prescription, "prescriptionRouter", "Bundle receta (token/QR), deliver (email + PDF)")
-  Component(userRouter, "userRouter", "Pacientes del médico, perfil")
+    Component(auth, "Auth Bridge (NextAuth)", "Valida sesión/roles; expone session en ctx")
+    Component(appRouter, "appointmentRouter", "Citas: crear, listar, marcar pago, etc.")
+    Component(consultRouter, "consultationRouter", "Consulta: crear, diagnóstico, órdenes, cerrar, resumen")
+    Component(prescription, "prescriptionRouter", "Bundle receta (token/QR), deliver (email + PDF)")
+    Component(userRouter, "userRouter", "Pacientes del médico, perfil")
+    Component(specialtyRouter, "specialtyRouter", "Lista especialidades médicas")
+    Component(roleRouter, "roleRouter", "Lista roles de usuario")
+    Component(doctorRouter, "doctorRouter", "Lista médicos por especialidad")
+    Component(clinicalHistoryRouter, "clinicalHistoryRouter", "Historias clínicas por paciente, línea de tiempo")
+    Component(branchRouter, "branchRouter", "Lista/crea sucursales")
 }
 
 ComponentDb(db, "Prisma Client", "Acceso a PostgreSQL")
 Component(pdfsvc, "PDF Helper (PDFKit)", "buildPrescriptionPdfBuffer()")
 Component(mailer, "Mailer Helper (Nodemailer)", "ctx.mailer.send(...) o similar")
 
+' ===== Relaciones de autenticación / autorización =====
 Rel(auth, appRouter, "Valida sesión/rol")
 Rel(auth, consultRouter, "Valida sesión/rol")
-Rel(auth, resultsRouter, "Valida sesión/rol")
 Rel(auth, prescription, "Valida sesión/rol")
 Rel(auth, userRouter, "Valida sesión/rol")
+Rel(auth, clinicalHistoryRouter, "Valida sesión/rol")
+Rel(auth, branchRouter, "Valida sesión/rol (admin)")
+Rel(auth, doctorRouter, "Valida sesión/rol (paciente/médico)")
+Rel(auth, specialtyRouter, "Valida sesión/rol (si aplica)")
+Rel(auth, roleRouter, "Valida sesión/rol (admin)")
 
+' ===== Acceso a datos (Prisma) =====
 Rel(appRouter, db, "CRUD con Prisma")
 Rel(consultRouter, db, "CRUD con Prisma")
-Rel(resultsRouter, db, "READ con Prisma")
 Rel(prescription, db, "READ con Prisma")
 Rel(userRouter, db, "READ con Prisma")
+Rel(specialtyRouter, db, "READ con Prisma")
+Rel(roleRouter, db, "READ con Prisma")
+Rel(doctorRouter, db, "READ con Prisma")
+Rel(clinicalHistoryRouter, db, "READ con Prisma")
+Rel(branchRouter, db, "CRUD con Prisma")
 
+' ===== Integraciones auxiliares =====
 Rel(prescription, pdfsvc, "Genera Buffer PDF")
 Rel(prescription, mailer, "Adjunta PDF y envía")
 
-Rel(consultRouter, prescription, "Obtiene bundle de receta/QR")
-Rel(consultRouter, resultsRouter, "Publica órdenes → resultados (cuando listos)")
+' (Opcional) Notificación al médico después del pago
+Rel(appRouter, mailer, "Notifica pago (correo al médico)")
 
+' ===== Vínculos funcionales entre dominios =====
+Rel(consultRouter, prescription, "Obtiene bundle de receta/QR")
+
+' Nota: clinicalHistoryRouter consume datos generados por consultationRouter/appointmentRouter a través de la BD (no llamada directa).
+' Se deja solo la relación a DB para evitar acoplamiento artificial entre routers.
 
 SHOW_LEGEND()
 @enduml

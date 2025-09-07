@@ -4,23 +4,23 @@
 
 title Sistema Clínico – Diagrama de Contexto (C1)
 
-Person(paciente, "Paciente", "Reserva, paga y revisa su historial, recetas y resultados.")
-Person(medico, "Médico", "Gestiona agenda, atiende, prescribe y emite órdenes.")
-Person(admin, "Administrador", "Gestiona usuarios y roles.")
+Person(paciente, "Paciente", "Usuario que agenda citas, recibe recetas y realiza pagos")
+Person(medico, "Médico", "Profesional que atiende pacientes y genera recetas")
+Person(admin, "Administrador", "Usuario que gestiona el sistema y usuarios")
 
-System_Boundary(sys, "Plataforma Clínica") {
-  System(webapp, "Web App (Next.js)", "Front (SSR/CSR) + API Routes mínimas.")
-}
+System(clinica, "Plataforma Clínica", "Sistema web para gestión de citas médicas, generación de recetas y pagos")
 
-System_Ext(mpago, "Mercado Pago", "Cobros con tarjeta (Brick/SDK).")
-System_Ext(smtp, "SMTP / Email", "Nodemailer para notificaciones y PDFs.")
+System_Ext(mercadopago, "Mercado Pago", "Sistema de pagos online")
+System_Ext(email, "Servicio de Email", "Sistema de envío de correos electrónicos")
+System_Ext(farmacia, "Sistema de Farmacia", "Sistema externo que consulta recetas médicas")
 
-Rel(paciente, webapp, "Usa", "HTTPS")
-Rel(medico, webapp, "Usa", "HTTPS")
-Rel(admin,  webapp, "Usa", "HTTPS")
+Rel(paciente, clinica, "Agenda citas, consulta recetas, realiza pagos", "HTTPS")
+Rel(medico, clinica, "Atiende pacientes, genera recetas", "HTTPS")
+Rel(admin, clinica, "Administra usuarios y sistema", "HTTPS")
 
-Rel(webapp, mpago, "Cobros", "HTTPS")
-Rel(webapp, smtp,  "Envía correos", "SMTP/TLS")
+Rel(clinica, mercadopago, "Procesa pagos de citas", "HTTPS/API")
+Rel(clinica, email, "Envía notificaciones y recetas por correo", "SMTP/TLS")
+Rel(farmacia, clinica, "Consulta recetas médicas válidas", "HTTPS/API")
 
 SHOW_LEGEND()
 @enduml
