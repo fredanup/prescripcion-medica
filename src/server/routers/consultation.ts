@@ -291,24 +291,6 @@ create: protectedProcedure
     }),
 
   /**
-   * 4) Guardar borrador (opcional)
-   */
-  saveDraft: protectedProcedure
-    .input(z.object({
-      consultationId: z.string().nullable().optional(),
-      partial: z.any().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      if (!input.consultationId) return { ok: true };
-      // ejemplo: guardar algo en notes; ajusta a tu gusto
-      await ctx.prisma.consultation.update({
-        where: { id: input.consultationId },
-        data: { /* notes: 'draft…' */ },
-      });
-      return { ok: true };
-    }),
-
-  /**
    * 5) Cerrar atención (status = completed, closedAt = now)
    *    Opcional: marcar Appointment.completed
    */

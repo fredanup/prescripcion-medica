@@ -64,7 +64,7 @@ export default function ConsultationForm() {
 
   // Mutations nuevas según schema
   const closeConsultation = trpc.consultation.close.useMutation();
-  const saveDraft = trpc.consultation.saveDraft.useMutation();
+
   const createDiagnosis = trpc.consultation.createDiagnosis.useMutation({
     onSuccess: async () => {
       await utils.consultation.getSummary.invalidate();
@@ -1020,14 +1020,6 @@ export default function ConsultationForm() {
       {/* Footer global */}
       <div className="max-w-4xl mx-auto sticky bottom-0 mt-6 bg-white border border-[#E4E8EB] rounded-xl p-4 shadow-sm">
         <div className="flex justify-end gap-2">
-          <button
-            onClick={() =>
-              saveDraft.mutate({ consultationId, partial: buildPayload() })
-            }
-            className="px-4 py-2 rounded-lg bg-[#F7F7F8] border border-[#E4E8EB] text-sm font-medium text-[#374151] hover:bg-white transition-colors"
-          >
-            Guardar borrador
-          </button>
           <button
             disabled={
               !consultationId ||
