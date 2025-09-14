@@ -12,6 +12,18 @@ export const appointmentRouter = createTRPCRouter({
       notes: z.string().nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
+      // Validar que la fecha no sea anterior a la fecha actual
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const appointmentDate = new Date(input.date.getFullYear(), input.date.getMonth(), input.date.getDate());
+      
+      if (appointmentDate < today) {
+        throw new TRPCError({ 
+          code: 'BAD_REQUEST',
+          message: 'No se puede crear una cita en una fecha pasada.',
+        });
+      }
+
       const conflicting = await ctx.prisma.appointment.findFirst({
         where: {
           doctorId: input.doctorId,
@@ -21,6 +33,7 @@ export const appointmentRouter = createTRPCRouter({
           }
         },
       });
+      
       if (conflicting) {
         throw new TRPCError({ 
           code: 'CONFLICT',
@@ -28,19 +41,19 @@ export const appointmentRouter = createTRPCRouter({
         });
       }
 
-     
       if (!ctx.session || !ctx.session.user || !ctx.session.user.patientId) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Sesión inválida.' });
       }
+      
       const appointment = await ctx.prisma.appointment.create({
         data: {
           patientId: ctx.session.user.patientId,
           doctorId: input.doctorId,
           specialtyId: input.specialtyId,
           date: input.date,
-          
         },
       });
+      
       return appointment;
     }),
 
