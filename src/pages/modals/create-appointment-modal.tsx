@@ -10,103 +10,62 @@ import 'react-datepicker/dist/react-datepicker.css';
 /* ===================== */
 
 const PERU_TZ = 'America/Lima';
-const PERU_OFFSET = '-05:00'; // Perú no usa DST
 
-// Hoy 00:00 en Lima
-const startOfTodayInPeru = (): Date => {
+// Fecha (00:00) de HOY en Lima
+const getTodayInPeru = (): Date => {
   const now = new Date();
-  const y = now.toLocaleString('en-CA', { timeZone: PERU_TZ, year: 'numeric' });
-  const m = now.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    month: '2-digit',
-  });
-  const d = now.toLocaleString('en-CA', { timeZone: PERU_TZ, day: '2-digit' });
-  return new Date(`${y}-${m}-${d}T00:00:00${PERU_OFFSET}`);
+  const peruDateString = now.toLocaleDateString('en-CA', { timeZone: PERU_TZ });
+  // ISO parcial (YYYY-MM-DD) interpretado en local → suficiente para base de horas
+  return new Date(peruDateString + 'T00:00:00');
 };
 
-// “Ahora” en Lima
-const nowInPeru = (): Date => {
-  const now = new Date();
-  const y = now.toLocaleString('en-CA', { timeZone: PERU_TZ, year: 'numeric' });
-  const m = now.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    month: '2-digit',
-  });
-  const d = now.toLocaleString('en-CA', { timeZone: PERU_TZ, day: '2-digit' });
-  const hh = now.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    hour: '2-digit',
-    hour12: false,
-  });
-  const mm = now.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    minute: '2-digit',
-  });
-  const ss = now.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    second: '2-digit',
-  });
-  return new Date(`${y}-${m}-${d}T${hh}:${mm}:${ss}${PERU_OFFSET}`);
+// “Ahora” en Lima (fecha+hora)
+const getNowInPeru = (): Date => {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: PERU_TZ }));
 };
 
-// ¿d1 y d2 son el mismo día en Lima?
-const isSameCalendarDayPeru = (d1: Date, d2: Date): boolean => {
-  const f = (x: Date) =>
-    x.toLocaleString('en-CA', {
-      timeZone: PERU_TZ,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  return f(d1) === f(d2);
+// ¿Mismo día en Lima?
+const isSameDay = (date1: Date, date2: Date): boolean => {
+  const d1String = date1.toLocaleDateString('en-CA', { timeZone: PERU_TZ });
+  const d2String = date2.toLocaleDateString('en-CA', { timeZone: PERU_TZ });
+  return d1String === d2String;
 };
 
-// ¿fecha (sin hora) no es anterior a hoy Lima?
-const isDateValidDay = (date: Date | null): boolean => {
+// Día válido (no anterior a hoy Lima)
+const isValidDate = (date: Date | null): boolean => {
   if (!date) return false;
-  const y = date.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    year: 'numeric',
-  });
-  const m = date.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    month: '2-digit',
-  });
-  const d = date.toLocaleString('en-CA', { timeZone: PERU_TZ, day: '2-digit' });
-  const dateAtMidnightPeru = new Date(`${y}-${m}-${d}T00:00:00${PERU_OFFSET}`);
-  return dateAtMidnightPeru.getTime() >= startOfTodayInPeru().getTime();
-};
-
-// ¿fecha/hora >= ahora en Lima?
-const isDateTimeInFuturePeru = (date: Date | null): boolean => {
-  if (!date) return false;
-  const y = date.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    year: 'numeric',
-  });
-  const m = date.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    month: '2-digit',
-  });
-  const d = date.toLocaleString('en-CA', { timeZone: PERU_TZ, day: '2-digit' });
-  const hh = date.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    hour: '2-digit',
-    hour12: false,
-  });
-  const mm = date.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    minute: '2-digit',
-  });
-  const ss = date.toLocaleString('en-CA', {
-    timeZone: PERU_TZ,
-    second: '2-digit',
-  });
-  const selectedPeru = new Date(
-    `${y}-${m}-${d}T${hh}:${mm}:${ss}${PERU_OFFSET}`,
+  const today = getTodayInPeru();
+  const selectedDay = new Date(
+    date.toLocaleDateString('en-CA', { timeZone: PERU_TZ }) + 'T00:00:00',
   );
-  return selectedPeru.getTime() >= nowInPeru().getTime();
+  return selectedDay >= today;
 };
+
+// Fecha/hora en el futuro (con buffer)
+const isDateTimeInFuture = (date: Date | null): boolean => {
+  if (!date) return false;
+  const now = getNowInPeru();
+
+  if (!isSameDay(date, now)) {
+    return isValidDate(date);
+  }
+
+  const dateInPeru = new Date(
+    date.toLocaleString('en-US', { timeZone: PERU_TZ }),
+  );
+  const buffer = 5 * 60 * 1000; // 5 min
+  return dateInPeru.getTime() > now.getTime() + buffer;
+};
+
+// Helper: setear hora sobre una fecha base
+const withTime = (base: Date, h: number, m = 0, s = 0, ms = 0) => {
+  const d = new Date(base);
+  d.setHours(h, m, s, ms);
+  return d;
+};
+
+const BUSINESS_START_H = 8; // 08:00
+const BUSINESS_END_H = 18; // 18:00
 
 export default function CreateAppointmentModal({
   isOpen,
@@ -141,12 +100,21 @@ export default function CreateAppointmentModal({
     onSuccess: async () => {
       await utils.appointment.findMyAppointments.invalidate();
       onClose();
+      // Limpiar el formulario
+      setSpecialtyId('');
+      setDoctorId('');
+      setAppointmentDate(null);
+      setNotes('');
+      setPrice(null);
+      setErrorMsg(null);
     },
   });
 
-  // Mapear slots ocupados (asumiendo ISO/UTC desde el server)
+  // Mapear slots ocupados
   useEffect(() => {
-    if (slots) setTakenSlots(slots.map((s) => new Date(s)));
+    if (slots) {
+      setTakenSlots(slots.map((s) => new Date(s)));
+    }
   }, [slots]);
 
   // Cargar valores si se edita
@@ -162,16 +130,18 @@ export default function CreateAppointmentModal({
 
   // Refetch de slots al cambiar de médico
   useEffect(() => {
-    if (doctorId) fetchTakenSlots();
+    if (doctorId) {
+      fetchTakenSlots();
+    }
   }, [doctorId, fetchTakenSlots]);
 
   // Evitar scroll del body cuando el modal está abierto
   useEffect(() => {
     if (!isOpen) return;
-    const { overflow } = document.body.style;
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = overflow;
+      document.body.style.overflow = originalOverflow;
     };
   }, [isOpen]);
 
@@ -187,33 +157,56 @@ export default function CreateAppointmentModal({
     );
   }, [takenSlots, appointmentDate]);
 
-  // Para DatePicker: minDate (día) + minTime (hora si es hoy)
-  const minDatePeru = startOfTodayInPeru();
-  const minTimeForSelectedDay = useMemo(() => {
-    if (!appointmentDate) return undefined;
-    return isSameCalendarDayPeru(appointmentDate, minDatePeru)
-      ? nowInPeru()
-      : undefined;
-  }, [appointmentDate, minDatePeru]);
+  // Configuración base para DatePicker
+  const minDate = getTodayInPeru();
+
+  // Siempre proveemos ambos: minTime y maxTime
+  const { minTime, maxTime } = useMemo(() => {
+    // Base para construir horas: la fecha seleccionada o hoy
+    const base = appointmentDate ?? minDate;
+
+    const startOfDay = withTime(base, BUSINESS_START_H, 0, 0, 0);
+    const endOfDay = withTime(base, BUSINESS_END_H, 0, 0, 0);
+
+    // Si es el mismo día, que minTime sea max(ahora+10min, inicioJornada)
+    if (appointmentDate && isSameDay(appointmentDate, minDate)) {
+      const nowPlus10 = new Date(getNowInPeru().getTime() + 10 * 60 * 1000);
+      const todayMin = nowPlus10 > startOfDay ? nowPlus10 : startOfDay;
+      return {
+        minTime: todayMin < endOfDay ? todayMin : startOfDay,
+        maxTime: endOfDay,
+      };
+    }
+
+    // Días futuros (o sin selección): horario comercial estándar
+    return {
+      minTime: startOfDay,
+      maxTime: endOfDay,
+    };
+  }, [appointmentDate, minDate]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!formHasBasics) return;
+    if (!formHasBasics) {
+      setErrorMsg('Por favor complete todos los campos obligatorios.');
+      return;
+    }
 
-    // Validar día (no pasado)
-    if (!isDateValidDay(appointmentDate)) {
+    // Validar día
+    if (!isValidDate(appointmentDate)) {
       setErrorMsg('No se puede crear una cita en una fecha pasada.');
       return;
     }
 
-    // Validar hora si es hoy (>= ahora Lima)
-    if (!isDateTimeInFuturePeru(appointmentDate)) {
+    // Validar hora para hoy
+    if (!isDateTimeInFuture(appointmentDate)) {
       setErrorMsg('La hora seleccionada ya pasó. Elige una hora futura.');
       return;
     }
 
+    // Validar slot disponible
     if (isSlotTaken) {
       setErrorMsg(
         'La hora seleccionada ya está ocupada. Por favor, elija otra.',
@@ -221,13 +214,24 @@ export default function CreateAppointmentModal({
       return;
     }
 
-    // Nota: ideal enviar en ISO UTC y normalizar en backend
+    // Crear la cita
     createAppointment.mutate({
       doctorId,
       specialtyId,
-      date: appointmentDate, // o: new Date(appointmentDate.toISOString())
+      date: appointmentDate,
       notes,
     });
+  };
+
+  const handleClose = () => {
+    // Limpiar formulario al cerrar
+    setSpecialtyId('');
+    setDoctorId('');
+    setAppointmentDate(null);
+    setNotes('');
+    setPrice(null);
+    setErrorMsg(null);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -237,7 +241,7 @@ export default function CreateAppointmentModal({
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black/40 z-40"
-        onClick={onClose}
+        onClick={handleClose}
         aria-hidden="true"
       />
 
@@ -255,7 +259,7 @@ export default function CreateAppointmentModal({
         </p>
 
         {errorMsg && (
-          <div className="mb-4 rounded-lg border border-[#E4E8EB] bg-[#F7F7F8] p-3 text-sm text-[#374151]">
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {errorMsg}
           </div>
         )}
@@ -263,7 +267,7 @@ export default function CreateAppointmentModal({
         {/* Especialidad */}
         <div className="mb-5">
           <label className="block text-sm font-semibold text-[#374151] mb-1">
-            Especialidad
+            Especialidad *
           </label>
           <select
             className="w-full text-sm rounded-lg border border-[#E4E8EB] bg-[#F7F7F8] px-3 py-2 text-[#374151]
@@ -272,12 +276,15 @@ export default function CreateAppointmentModal({
             onChange={(e) => {
               const selectedId = e.target.value;
               setSpecialtyId(selectedId);
+              setDoctorId(''); // reset al cambiar especialidad
+              setAppointmentDate(null);
               const selected = specialties?.find((s) => s.id === selectedId);
               setPrice(selected?.price ?? null);
               setErrorMsg(null);
             }}
+            required
           >
-            <option value="">Seleccionar</option>
+            <option value="">Seleccionar especialidad</option>
             {specialties?.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -298,7 +305,7 @@ export default function CreateAppointmentModal({
         <div className="mb-5 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-1">
-              Médico
+              Médico *
             </label>
             <select
               className="w-full text-sm rounded-lg border border-[#E4E8EB] bg-[#F7F7F8] px-3 py-2 text-[#374151]
@@ -306,10 +313,13 @@ export default function CreateAppointmentModal({
               value={doctorId}
               onChange={(e) => {
                 setDoctorId(e.target.value);
+                setAppointmentDate(null); // reset fecha al cambiar médico
                 setErrorMsg(null);
               }}
+              disabled={!specialtyId}
+              required
             >
-              <option value="">Seleccionar</option>
+              <option value="">Seleccionar médico</option>
               {doctors?.map((doctor) => (
                 <option key={doctor.id} value={doctor.id}>
                   {doctor.user.name} {doctor.user.lastName}
@@ -320,27 +330,33 @@ export default function CreateAppointmentModal({
 
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-1">
-              Fecha y hora
+              Fecha y hora *
             </label>
             <ReactDatePicker
               selected={appointmentDate}
-              onChange={(d) => {
-                setAppointmentDate(d);
+              onChange={(date) => {
+                setAppointmentDate(date);
                 setErrorMsg(null);
               }}
               showTimeSelect
               timeIntervals={15}
-              dateFormat="Pp"
+              dateFormat="dd/MM/yyyy HH:mm"
+              timeFormat="HH:mm"
+              minDate={minDate}
+              // Siempre presentes los dos para evitar el error
+              minTime={minTime}
+              maxTime={maxTime}
+              disabled={!doctorId}
               required
-              minDate={minDatePeru} // bloquea días pasados
-              minTime={minTimeForSelectedDay} // si es hoy, bloquea horas pasadas
               className="w-full text-sm rounded-lg border border-[#E4E8EB] bg-[#F7F7F8] px-3 py-2 text-[#374151]
                          focus:outline-none focus:ring-2 focus:ring-gray-300"
-              placeholderText="Seleccionar"
+              placeholderText="Seleccionar fecha y hora"
+              timeCaption="Hora"
+              excludeTimes={takenSlots}
             />
             {appointmentDate && isSlotTaken && (
               <p className="text-xs text-red-600 mt-1">
-                La hora seleccionada está ocupada.
+                ⚠️ La hora seleccionada está ocupada
               </p>
             )}
           </div>
@@ -349,7 +365,7 @@ export default function CreateAppointmentModal({
         {/* Notas */}
         <div className="mb-6">
           <label className="block text-sm font-semibold text-[#374151] mb-1">
-            Notas
+            Notas adicionales
           </label>
           <textarea
             value={notes}
@@ -357,17 +373,18 @@ export default function CreateAppointmentModal({
             rows={3}
             className="w-full text-sm rounded-lg border border-[#E4E8EB] bg-[#F7F7F8] px-3 py-2 text-[#374151]
                        focus:outline-none focus:ring-2 focus:ring-gray-300"
-            placeholder="Opcional"
+            placeholder="Información adicional sobre la consulta (opcional)"
           />
         </div>
 
         {/* Acciones */}
-        <div className="pt-4 flex justify-end gap-2 border-t border-[#E4E8EB]">
+        <div className="pt-4 flex justify-end gap-3 border-t border-[#E4E8EB]">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-[#E4E8EB] bg-[#F7F7F8] text-sm font-medium text-[#374151]
-                       transition-colors hover:bg-white"
+            onClick={handleClose}
+            className="px-4 py-2 rounded-lg border border-[#E4E8EB] bg-white text-sm font-medium text-[#374151]
+                       transition-colors hover:bg-gray-50"
+            disabled={isSaving}
           >
             Cancelar
           </button>
@@ -375,9 +392,17 @@ export default function CreateAppointmentModal({
             type="submit"
             disabled={!formHasBasics || isSaving || isSlotTaken}
             className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold shadow-sm
-                       transition-colors hover:bg-[#1D4ED8] disabled:opacity-60"
+                       transition-colors hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed
+                       flex items-center gap-2"
           >
-            {isSaving ? 'Guardando…' : 'Guardar'}
+            {isSaving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Guardando...
+              </>
+            ) : (
+              'Reservar cita'
+            )}
           </button>
         </div>
       </form>

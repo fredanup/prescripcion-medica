@@ -100,14 +100,17 @@ export default function Appointments() {
                   <td className="py-4 pr-2">{appointment.specialty.name}</td>
                   <td className="py-4 pr-2">
                     {new Date(appointment.date).toLocaleString('es-PE', {
+                      timeZone: 'America/Lima', // <- fija la zona
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit',
+                      hour12: false, // <- fuerza 24h (sin “a. m.” / “p. m.”)
                     })}
                   </td>
+
                   <td className="py-4 pr-2">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
